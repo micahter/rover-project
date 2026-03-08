@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <link rel="stylesheet" href="CSS_TankGui.css">
+=======
+    <link rel="stylesheet" href="style.css">
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
     <title>TankGUI</title>
     
 </head>
@@ -28,16 +32,26 @@
     <h3>--Control Keys--</h3>
     <div class="controls">   <!-- Starts Controls  -->
         <div class="column">    
+<<<<<<< HEAD
             <button class="button" id="btnW" onclick="forward()">W</button>
         </div>
         <div class="row">   <!-- Starts ROWS  -->
             <button class="button" id="btnA" onclick="left()">A</button>
             <button class="button" id="btnS" onclick="backward()">S</button>
             <button class="button" id="btnD" onclick="right()">D</button>
+=======
+            <button class="button">W</button>
+        </div>
+        <div class="row">   <!-- Starts ROWS  -->
+            <button class="button">A</button>
+            <button class="button">S</button>
+            <button class="button">D</button>
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
         </div>  <!-- End ROWS  -->
     </div> <!-- Ends Controls  -->
     <!-- End of Buttons-->
 
+<<<<<<< HEAD
     <p>
         <span id="wOutput" style="margin-right:50px;"></span>
         <span id="sOutput" style="margin-right:50px;"></span>
@@ -48,12 +62,21 @@
     <br>
 
     <button id="stopButton"onclick="stop()">Stop</button>
+=======
+    <br>
+
+    <button onclick="Stop()">Stop</button>
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
     <!-- Output for Stop button -->
     <span id="stopOutput" style="margin-left: 10px;"></span>
 
     <br><br>
     <input type="checkbox"  id="autoMode" name="Auto">Auto
+<<<<<<< HEAD
     <button onclick="quit()">Quit</button>
+=======
+    <button onclick="Quit()" id="quitButton">Quit</button>
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
     <span id="quitOutput" style="margin-left: 10px;"></span>
 
 
@@ -98,6 +121,7 @@
             })
         }
 
+<<<<<<< HEAD
         function clearOutputs() {
             document.getElementById("wOutput").innerText = "";
             document.getElementById("sOutput").innerText = "";
@@ -175,12 +199,19 @@
             .then(data => {
                 clearOutputs();
                 flashButton("stopButton");
+=======
+        function Stop(){
+            fetch("http://127.0.0.1:8000/Stop")
+            .then(response => response.json())
+            .then(data => {
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
                 document.getElementById("stopOutput").innerText = data.message;
             })
             .catch(error => {
                 document.getElementById("stopOutput").innerText = "Failed to Stop";
                 console.log(error);
             })
+<<<<<<< HEAD
         }
 
         
@@ -260,15 +291,31 @@
                 document.getElementById("velocitySlider").value = 1;
                 document.getElementById("velocityValuetext").innerText = "1";
 
+=======
+
+        function Quit(){
+            fetch("http://127.0.0.1:8000/Quit")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("quitOutput").innerText = data.message;
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
             })
             .catch(error => {
                 document.getElementById("quitOutput").innerText = "Failed to Quit";
                 console.log(error);
+<<<<<<< HEAD
                 window.location.reload(); // Reload the page to reset the state
             })
         }
 
         
+=======
+            })
+
+        }
+
+        }
+>>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
     </script>
 
 
