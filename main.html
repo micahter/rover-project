@@ -1,324 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <link rel="stylesheet" href="CSS_TankGui.css">
-=======
-    <link rel="stylesheet" href="style.css">
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-    <title>TankGUI</title>
-    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="CSS_TankGui.css" />
+  <title>TankGUI</title>
 </head>
+
 <body>
-    <h3>--Connection---</h3>
-    IP: <input type="text" id="ipAddress">
-    Port: <input type="text" id="arduinoPort">
-    <button onclick="connect()">Connect</button>
-    <p><span id="connectButton">No Connection</span></p>
+  <h3>--Connection---</h3>
+  IP: <input type="text" id="ipAddress" />
+  Port: <input type="text" id="arduinoPort" />
+  <button onclick="connect()">Connect</button>
+  <p><span id="connectButton">No Connection</span></p>
 
-    <h3>--Speed-----------</h3>
-    <!-- Speed Slider -->
-    <label>Max V (m/s):</label>
-    <input type="range" min="0" max="3" step="0.1" 
-    value="1" id="velocitySlider" 
-    oninput="updateVelocity()"> 
-    <p>Velocity: <span id="velocityValuetext">1</span></p>
+  <h3>--Speed-----------</h3>
+  <label>Max V (m/s):</label>
+  <input type="range" min="0" max="3" step="0.1" value="1"
+         id="velocitySlider" oninput="updateVelocity()" />
+  <p>Velocity: <span id="velocityValuetext">1</span></p>
 
-    <!-- <br><label>Max W (m/s):</label> 
-    <input type="range" id="max_w" min="0" max="6"> -->
+  <label>Max W (rad/s):</label>
+  <input type="range" min="0" max="3" step="0.1" value="1"
+         id="turnSlider" oninput="updateTurn()" />
+  <p>Turn Strength: <span id="turnValuetext">1</span></p>
 
-    <h3>--Control Keys--</h3>
-    <div class="controls">   <!-- Starts Controls  -->
-        <div class="column">    
-<<<<<<< HEAD
-            <button class="button" id="btnW" onclick="forward()">W</button>
-        </div>
-        <div class="row">   <!-- Starts ROWS  -->
-            <button class="button" id="btnA" onclick="left()">A</button>
-            <button class="button" id="btnS" onclick="backward()">S</button>
-            <button class="button" id="btnD" onclick="right()">D</button>
-=======
-            <button class="button">W</button>
-        </div>
-        <div class="row">   <!-- Starts ROWS  -->
-            <button class="button">A</button>
-            <button class="button">S</button>
-            <button class="button">D</button>
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-        </div>  <!-- End ROWS  -->
-    </div> <!-- Ends Controls  -->
-    <!-- End of Buttons-->
+  <h3>--Control Keys--</h3>
+  <div class="controls">
+    <div class="column">
+      <button class="button1" id="btnW" onclick="forward()">W</button>
+    </div>
+    <div class="row">
+      <button class="button1" id="btnA" onclick="left()">A</button>
+      <button class="button1" id="btnS" onclick="backward()">S</button>
+      <button class="button1" id="btnD" onclick="right()">D</button>
+    </div>
+  </div>
 
-<<<<<<< HEAD
-    <p>
-        <span id="wOutput" style="margin-right:50px;"></span>
-        <span id="sOutput" style="margin-right:50px;"></span>
-        <span id="aOutput" style="margin-right:50px;"></span>
-        <span id="dOutput" style="margin-right:50px;"></span>
-    </p>
+  <p>
+    <span id="wOutput" style="margin-right:50px;"></span>
+    <span id="sOutput" style="margin-right:50px;"></span>
+    <span id="aOutput" style="margin-right:50px;"></span>
+    <span id="dOutput" style="margin-right:50px;"></span>
+  </p>
 
-    <br>
+  <button id="stopButton" onclick="stop()">Stop</button>
+  <span id="stopOutput" style="margin-left: 10px;"></span>
 
-    <button id="stopButton"onclick="stop()">Stop</button>
-=======
-    <br>
+  <br><br>
+  <input type="checkbox" id="autoMode" onchange="toggleAutoMode()">Auto Mode
+  <button onclick="quit()">Quit</button>
+  <span id="quitOutput" style="margin-left: 10px;"></span>
 
-    <button onclick="Stop()">Stop</button>
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-    <!-- Output for Stop button -->
-    <span id="stopOutput" style="margin-left: 10px;"></span>
+  <h3>--Arduino Telemetry------</h3>
+  <input type="text" id="distanceBox" readonly />
 
-    <br><br>
-    <input type="checkbox"  id="autoMode" name="Auto">Auto
-<<<<<<< HEAD
-    <button onclick="quit()">Quit</button>
-=======
-    <button onclick="Quit()" id="quitButton">Quit</button>
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-    <span id="quitOutput" style="margin-left: 10px;"></span>
+  <h3>--Distance Sensor------</h3>
+  <input type="text" value="Just Print Values" readonly />
 
+  <script>
+    const BASE_URL = "http://127.0.0.1:8000";
+    const UPDATE_HZ = 20;
+    const UPDATE_MS = 1000 / UPDATE_HZ;
 
-    <h3>--Arduino Telemetry------</h3>
-    <!-- Here is for print Arduino 
-     similar to what we had on the previous GUI-->
-     <input type="text" value="Just Print Values" class="readonly" readonly>
-    
+    let connected = false;
+    let keys = new Set();
+    let intervalId = null;
 
-
-    <h3>--Distance Sensor------</h3>
-    <!-- Here is for print Sensor 
-     similar to what we had on the previous GUI-->
-    <input type="text" value="Just Print Values" class="readonly" readonly>
-
-    <script>
-        function connect() {
-
-            let ip = document.getElementById("ipAddress").value;
-            let port = document.getElementById("arduinoPort").value;
-
-            document.getElementById("connectButton").innerText = "Connecting...";
-            fetch(`http://127.0.0.1:8000/connect?ip=${ip}&port=${port}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("connectButton").innerText = data.message;
-                console.log(data.message);
-            })
-            .catch(error => {
-                document.getElementById("connectButton").innerText = "Connection Failed";
-                console.log(error);
-            })
-        }
-
-        function updateVelocity() {
-            let v = document.getElementById("velocitySlider").value;
-            document.getElementById("velocityValuetext").innerText = Number(v).toFixed(1);
-            fetch(`http://127.0.0.1:8000/velocity?v=${v}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-            })
-        }
-
-<<<<<<< HEAD
-        function clearOutputs() {
-            document.getElementById("wOutput").innerText = "";
-            document.getElementById("sOutput").innerText = "";
-            document.getElementById("aOutput").innerText = "";
-            document.getElementById("dOutput").innerText = "";
-            document.getElementById("stopOutput").innerText = "";
-        }
-
-        function flashButton(id) {
-            const btn = document.getElementById(id);
-            btn.style.backgroundColor = "yellow";
-            setTimeout(() => {
-                btn.style.backgroundColor = "";
-            }, 150);  
-        }
-        // 150 = 0.15 seconds and 150 milliseconds
-        document.addEventListener("keydown", function(event) {
-            const key = event.key.toLowerCase();
-
-            if (key === "w") {
-                clearOutputs();
-                forward();
-                flashButton("btnW");
-                document.getElementById("wOutput").innerText = "Forward";
-            
-            
-
-                setTimeout(() => {
-                    stop();
-                }, 150);
-            }
-            
-            
-            else if (key === "s") {
-                clearOutputs();
-                backward();
-                flashButton("btnS");
-                document.getElementById("sOutput").innerText = "Backward";
-
-                setTimeout(() => {
-                    stop();
-                }, 150);
-            }
-            else if (key === "a") {
-                clearOutputs();
-                left();
-                flashButton("btnA");
-                document.getElementById("aOutput").innerText = "Left";
-
-                setTimeout(() => {
-                    stop();
-                }, 150);
-            }
-            else if (key === "d"){
-                clearOutputs();
-                right();
-                flashButton("btnD");
-                document.getElementById("dOutput").innerText = "Right";
-
-                setTimeout(() => {
-                    stop();
-                }, 150);
-            }
-            
-            else if (event.code === "Space") {
-                stop();
-                document.getElementById("stopOutput").innerText = "Stopping";
-            }
-
+    // -------------------------------
+    // CONNECTION
+    // -------------------------------
+    function connect() {
+      let ip = document.getElementById("ipAddress").value;
+      let port = document.getElementById("arduinoPort").value;
+      
+      document.getElementById("connectButton").innerText = "Connecting...";
+      fetch(`${BASE_URL}/connect?ip=${ip}&port=${port}`)
+        .then((r) => r.json())
+        .then((data) => {
+          document.getElementById("connectButton").innerText = data.message;
+          connected = data.message.includes("Connected");
+        })
+        .catch((err) => {
+          document.getElementById("connectButton").innerText = "Connection Failed";
+          console.log(err);
         });
+    }
 
-        function stop(){
-            fetch("http://127.0.0.1:8000/stop")
-            .then(response => response.json())
-            .then(data => {
-                clearOutputs();
-                flashButton("stopButton");
-=======
-        function Stop(){
-            fetch("http://127.0.0.1:8000/Stop")
-            .then(response => response.json())
-            .then(data => {
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-                document.getElementById("stopOutput").innerText = data.message;
-            })
-            .catch(error => {
-                document.getElementById("stopOutput").innerText = "Failed to Stop";
-                console.log(error);
-            })
-<<<<<<< HEAD
-        }
+    // -------------------------------
+    // SLIDERS
+    // -------------------------------
+    function updateVelocity() {
+      if (!connected) return;
+      let v = document.getElementById("velocitySlider").value;
+      document.getElementById("velocityValuetext").innerText = Number(v).toFixed(1);
+      fetch(`${BASE_URL}/velocity?v=${v}`);
+    }
 
-        
+    function updateTurn() {
+      if (!connected) return;
+      let w = document.getElementById("turnSlider").value;
+      document.getElementById("turnValuetext").innerText = Number(w).toFixed(1);
+      fetch(`${BASE_URL}/turn?w=${w}`);
+    }
 
-        function forward() {
-            fetch("http://127.0.0.1:8000/forward")
-            .then(response => response.json())
-            .then(data => {
-                clearOutputs();
-                flashButton("btnW");
-                document.getElementById("wOutput").innerText = "Forward";
-            })
-            .catch(error => {
-                document.getElementById("wOutput").innerText = "Failed to Forward";
-                console.log(error);
-            })
-        }
+    // -------------------------------
+    // SMOOTH KEYBOARD CONTROL (like old TankGUI)
+    // -------------------------------
+    document.addEventListener("keydown", (event) => {
+      if (!connected) return;
 
-        function backward() {
-            fetch("http://127.0.0.1:8000/backward")
-            .then(response => response.json())
-            .then(data => {
-                clearOutputs();
-                flashButton("btnS");
-                document.getElementById("sOutput").innerText = "Backward";
-            })
-            .catch(error => {
-                document.getElementById("sOutput").innerText = "Failed to Backward";
-                console.log(error);
-            })
-        }
+      const key = event.key.toLowerCase();
+      if (!["w", "a", "s", "d"].includes(key)) return;
+      if (keys.has(key)) return;
 
-        function right() {
-            fetch("http://127.0.0.1:8000/right")
-            .then(response => response.json())
-            .then(data => {
-                clearOutputs();
-                flashButton("btnD");
-                document.getElementById("dOutput").innerText = "Right";
-            })
-            .catch(error => {
-                document.getElementById("dOutput").innerText = "Failed to Right";
-                console.log(error);
-            })
-        }
+      // Automode unable WASD
+      if (document.getElementById("autoMode").checked) {
+        document.getElementById("autoMode").checked = false;
+        fetch(`${BASE_URL}/auto_off`);
+      }
 
-        function left() {
-            fetch("http://127.0.0.1:8000/left")
-            .then(response => response.json())
-            .then(data => {
-                clearOutputs();
-                flashButton("btnA");
-                document.getElementById("aOutput").innerText = "Left";
-            })
-            .catch(error => {
-                document.getElementById("aOutput").innerText = "Failed to Left";
-                console.log(error);
-            })
-        }
+      keys.add(key);
+      handleUI(key);
 
+      if (!intervalId) {
+        intervalId = setInterval(sendContinuousCommand, UPDATE_MS);
+      }
+    });
 
-        function quit() {
-            fetch("http://127.0.0.1:8000/quit")
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("quitOutput").innerText = data.message;
+    document.addEventListener("keyup", (event) => {
+      const key = event.key.toLowerCase();
+      keys.delete(key);
+      if (keys.size === 0 && intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+        stop();
+        clearOutputs();
+      }
+    });
 
-                document.getElementById("ipAddress").value = "";
-                document.getElementById("arduinoPort").value = "";
+    function sendContinuousCommand() {
+      if (!connected) return;
+      let v = 0, w = 0;
 
-                document.getElementById("wOutput").innerText = "";
-                document.getElementById("sOutput").innerText = "";
-                document.getElementById("aOutput").innerText = "";
-                document.getElementById("dOutput").innerText = "";
-                document.getElementById("stopOutput").innerText = "";
+      if (keys.has("w")) v += 1;
+      if (keys.has("s")) v -= 1;
+      if (keys.has("a")) w += 1;
+      if (keys.has("d")) w -= 1;
 
-                document.getElementById("velocitySlider").value = 1;
-                document.getElementById("velocityValuetext").innerText = "1";
+      const maxV = parseFloat(document.getElementById("velocitySlider").value);
+      const maxW = parseFloat(document.getElementById("turnSlider").value);
 
-=======
+      v *= maxV;
+      w *= maxW;
 
-        function Quit(){
-            fetch("http://127.0.0.1:8000/Quit")
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("quitOutput").innerText = data.message;
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-            })
-            .catch(error => {
-                document.getElementById("quitOutput").innerText = "Failed to Quit";
-                console.log(error);
-<<<<<<< HEAD
-                window.location.reload(); // Reload the page to reset the state
-            })
-        }
+      const left = Math.max(-maxV, Math.min(maxV, v + w));
+      const right = Math.max(-maxV, Math.min(maxV, v - w));
 
-        
-=======
-            })
+      fetch(`${BASE_URL}/velocity_drive?l=${left}&r=${right}`)
+        .then((r) => r.json())
+        .catch((err) => console.log("Drive error:", err));
+    }
 
-        }
+    function handleUI(key) {
+      clearOutputs();
+      flashButton(`btn${key.toUpperCase()}`);
+      const keyMap = { w: "Forward", s: "Backward", a: "Left", d: "Right" };
+      document.getElementById(`${key}Output`).innerText = keyMap[key];
+    }
 
-        }
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-    </script>
+    // -------------------------------
+    // BUTTON FUNCTIONS
+    // -------------------------------
+    function flashButton(id) {
+      const btn = document.getElementById(id);
+      btn.style.backgroundColor = "yellow";
+      setTimeout(() => { btn.style.backgroundColor = ""; }, 120);
+    }
+
+    function clearOutputs() {
+      ["wOutput", "aOutput", "sOutput", "dOutput", "stopOutput"].forEach(
+        (id) => (document.getElementById(id).innerText = "")
+      );
+    }
+
+    function stop() {
+      if (!connected) return;
+      fetch(`${BASE_URL}/stop`)
+        .then((r) => r.json())
+        .then((d) => {
+          document.getElementById("stopOutput").innerText = d.message;
+        })
+        .catch((err) => console.log(err));
+    }
+
+    function toggleAutoMode() {
+      let isOn = document.getElementById("autoMode").checked;
+      if (isOn){
+        fetch(`${BASE_URL}/auto_on`);
+      } else {
+        fetch(`${BASE_URL}/auto_off`);
+      }
+    }
 
 
+    function quit() {
+      if (!connected) return;
+      fetch(`${BASE_URL}/quit`)
+        .then((r) => r.json())
+        .then((data) => {
+          document.getElementById("quitOutput").innerText = data.message;
+          document.getElementById("connectButton").innerText = "Disconnected";
+          connected = false;
+          keys.clear();
+          clearOutputs();
+        })
+        .catch((err) => console.log(err));
+    }
+
+    // -------------------------------
+    // DISTANCE SENSOR POLLING
+    // -------------------------------
+    setInterval(() => {
+      if (!connected) return;
+      fetch(`${BASE_URL}/distance`)
+        .then((r) => r.json())
+        .then((data) => {
+          document.getElementById("distanceBox").value = data.distance;
+        })
+        .catch(() => {});
+    }, 300);
+  </script>
 </body>
 </html>
-
