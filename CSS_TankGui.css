@@ -8,6 +8,7 @@ input[type="range"] {
     accent-color: #DBDAF7
 }
 
+
 .button {
     background-color: #f7dae7;
     border: 1px solid #555555;
@@ -45,3 +46,13 @@ input[type="range"] {
     width: 200px;
     cursor: not-allowed; 
 }
+
+
+
+
+/*lines up control keys and distance sensor*/
+.inline-block-child{
+    display: inline-block;
+    padding-inline: 50px;
+}
+
