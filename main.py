@@ -14,22 +14,16 @@ app.add_middleware(
 )
 
 #Global variables
-<<<<<<< HEAD
 tcp_socket = None
 current_ip= None
 current_port = None
-=======
-#tcp_socket = None
-#current_ip= None
-#current_port = None
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
 # This is a global variable that will store 
 # the current velocity of the robot.
 current_velocity = 1.0
+current_turn = 1.0
 
 #Endpoints
 
-<<<<<<< HEAD
 @app.get("/connect")
 def connect(ip:str, port:int):
 
@@ -43,20 +37,6 @@ def connect(ip:str, port:int):
       return {"message": f"Connected to {ip}:{port}"}
     except Exception as e:
         return {"message": f"Failed to connect:{e}"}
-=======
-@app.get("/Connect")
-def connect(ip:str, port:int):
-    #open the serial connection here using the provided IP and port
-    #global tcp_socket, current_ip, current_port
-    #current_ip = ip
-    #current_port = port
-    #try:
-    #   tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #   tcp_socket.connect((ip, port))
-    return {"message": f"Connected to {ip}:{port}"}
-    #except Exception as e:
-    #   return {"message": f"Failed to connect:{e}"}
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
 
 
 @app.get("/velocity")
@@ -66,23 +46,24 @@ def velocity(v: float):
     return {"message": f"Velocity set to {current_velocity}"}
 
 
-<<<<<<< HEAD
+# For turn strength
+@app.get("/turn")
+def turn(w: float):
+    global current_turn
+    current_turn = w
+    return {"message": f"Strength turn set to {current_turn}"}
+
+
+
 @app.get("/stop")
 def stop():
     global tcp_socket
     tcp_socket.sendall(b"stop_button\n") or stop
-=======
-@app.get("/Stop")
-def Stop():
-    #global tcp_socket
-    #tcp_socket.sendall(b"stop\n")
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
     return{"message": "Robot Stopped"}
 
 
 @app.get("/quit")
 def quit():
-<<<<<<< HEAD
     global tcp_socket
     try:
         tcp_socket.sendall(b"quit\n")
@@ -111,43 +92,51 @@ def backward():
     except Exception as e:
         return {"error": str(e)}
 
+#@app.get("/left")
+#def left():
+#    global tcp_socket, current_velocity
+#    try:
+#        cmd=f"V -{current_velocity:.2f} {current_velocity:.2f}\n"
+#        tcp_socket.sendall(cmd.encode())
+#        return{"message": f"Moving left with velocity {current_velocity}"}
+#    except Exception as e:
+#        return {"error": str(e)}
+
+#@app.get("/right")
+#def right():
+#    global tcp_socket, current_velocity
+#    try:
+#        cmd=f"V {current_velocity:.2f} -{current_velocity:.2f}\n"
+#        tcp_socket.sendall(cmd.encode())
+#        return{"message": f"Moving right with velocity {current_velocity}"}
+#    except Exception as e:
+#        return {"error": str(e)}
+
+#! Try this by changing the previous !#
+
+#add the global variables of current_velocity and current_speed,
+#variables left and right to make a turn smoothly
 @app.get("/left")
 def left():
-    global tcp_socket, current_velocity
+    global tcp_socket, current_velocity, current_turn
     try:
-        cmd=f"V -{current_velocity:.2f} {current_velocity:.2f}\n"
+        left = current_velocity - current_turn
+        right = current_velocity + current_turn
+        cmd=f"V {left:.2f} {right:.2f}\n"
         tcp_socket.sendall(cmd.encode())
-        return{"message": f"Moving left with velocity {current_velocity}"}
+        return{"message": f"Moving left {current_turn}"}
     except Exception as e:
         return {"error": str(e)}
+
 
 @app.get("/right")
 def right():
-    global tcp_socket, current_velocity
+    global tcp_socket, current_velocity, current_turn
     try:
-        cmd=f"V {current_velocity:.2f} -{current_velocity:.2f}\n"
+        left = current_velocity + current_turn
+        right = current_velocity - current_turn
+        cmd=f"V {left:.2f} {right:.2f}\n"
         tcp_socket.sendall(cmd.encode())
-        return{"message": f"Moving right with velocity {current_velocity}"}
+        return{"message": f"Moving right {current_turn}"}
     except Exception as e:
         return {"error": str(e)}
-
-
-
-=======
-    #global tcp_socket
-    #tcp_socket.sendall(b"quit\n")
-    return {"message": "Quit command sent"}
-
-
-# @app.get("/forward")
-# def forward():
-#     #global tcp_socket, current_velocity
-#     #cmd=f"V {current_velocity:.2f} {current_velocity:.2f}\n"
-#     #tcp_socket.sendall(cmd.encode())
-#     return{"message": "This is the forward endpoint."}
->>>>>>> 085cae1adad66b63c1ea0a40e0fd8bbed1316178
-
-
-
-
-
