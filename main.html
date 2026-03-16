@@ -142,7 +142,7 @@
       handleUI(key);
 
       if (!intervalId) {
-        intervalId = setInterval(sendContinuousCommand, UPDATE_MS);
+        intervalId = setInterval(sendContinuousCommand, UPDATE_MS); //runs 20 times per second (UPDATE_HZ=20)
       }
     });
 
@@ -244,8 +244,8 @@
       fetch(`${BASE_URL}/distance`)
         .then((r) => r.json())
         .then((data) => {
-          const box = document.getELementById("distanceBox");
-          box.value += 'Distance: ${data.distance}\n';
+          const box = document.getElementById("distanceBox");
+          box.value += `Distance: ${data.distance}\n`; //or ''
           box.scrollTop = box.scrollHeight;  //auto-scroll
           // document.getElementById("distanceBox").value = data.distance;
         })
