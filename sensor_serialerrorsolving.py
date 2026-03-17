@@ -232,12 +232,12 @@ def main():
             #daemon runs and exits when the main program ends
     finally:
         global running
-        running = False  # 🛑 Tell threads to stop
+        running = False  # Tell threads to stop
 
     try:
-        ser.write(b"Quit\n")  # 👋 Let Arduino know we're shutting down
+        ser.write(b"Quit\n")  # Let Arduino know we're shutting down
     except:
-        pass  # If it fails, no big deal — we're quitting anyway
+        pass  # we're quitting 
 
     s.close()
     ser.close()
