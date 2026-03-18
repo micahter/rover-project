@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +9,7 @@
 </head>
 
 <!-- BODY -->
+
 <body>
   <!-- CONNECTION -->
   <h3>--Connection---</h3>
@@ -17,62 +19,68 @@
   <p><span id="connectButton">No Connection</span></p>
   <!-- END OF CONNECTION -->
 
+  <img id="footage-placeholder" src="camera-placeholder.png" alt="Placeholder for live footage">
+
 
   <!-- SPEED SLIDERS -->
   <h3>--Speed-----------</h3>
   <label>Max V (m/s):</label>
-  <input type="range" min="0" max="3" step="0.1" value="1"
-         id="velocitySlider" oninput="updateVelocity()" />
+  <input type="range" min="0" max="3" step="0.1" value="1" id="velocitySlider" oninput="updateVelocity()" />
   <p>Velocity: <span id="velocityValuetext">1</span></p>
 
   <label>Max W (rad/s):</label>
-  <input type="range" min="0" max="3" step="0.1" value="1"
-         id="turnSlider" oninput="updateTurn()" />
+  <input type="range" min="0" max="3" step="0.1" value="1" id="turnSlider" oninput="updateTurn()" />
   <p>Turn Strength: <span id="turnValuetext">1</span></p>
   <!-- END -->
 
   <!-- CONTROL KEYS -->
-  <h3>--Control Keys--</h3>
-  <div class="controls">
-    <div class="column">
-      <button class="button1" id="btnW" onclick="forward()">W</button>
+  <section id="controls">
+    <h3>--Control Keys--</h3>
+    <div class="controls">
+      <div class="column">
+        <button class="button1" id="btnW" onclick="forward()">W</button>
+      </div>
+      <div class="row">
+        <button class="button1" id="btnA" onclick="left()">A</button>
+        <button class="button1" id="btnS" onclick="backward()">S</button>
+        <button class="button1" id="btnD" onclick="right()">D</button>
+      </div>
     </div>
-    <div class="row">
-      <button class="button1" id="btnA" onclick="left()">A</button>
-      <button class="button1" id="btnS" onclick="backward()">S</button>
-      <button class="button1" id="btnD" onclick="right()">D</button>
-    </div>
-  </div>
 
-  <p>
-    <span id="wOutput" style="margin-right:50px;"></span>
-    <span id="sOutput" style="margin-right:50px;"></span>
-    <span id="aOutput" style="margin-right:50px;"></span>
-    <span id="dOutput" style="margin-right:50px;"></span>
-  </p>
-  <!-- END OF CONTROL KEYS -->
+    <p>
+      <span id="wOutput" style="margin-right:50px;"></span>
+      <span id="sOutput" style="margin-right:50px;"></span>
+      <span id="aOutput" style="margin-right:50px;"></span>
+      <span id="dOutput" style="margin-right:50px;"></span>
+    </p>
+    <!-- END OF CONTROL KEYS -->
+  </section>
 
-  <!-- STOP BUTTON -->
-  <button class="button-10" role="button" id="stopButton" onclick="stop()">
-    <span id="stopOutput" class="text">Stop</span>
-  </button>
+  <section id="quit-and-stop">
+    <!-- STOP BUTTON -->
+    <button class="button-10" role="button" id="stopButton" onclick="stop()">
+      <span id="stopOutput" class="text">Stop</span>
+    </button>
 
-  <!-- QUIT BUTTON -->
-  <button class="button-10" role="button" onclick="quit()">
-    <span id="quitOutput" class="text">Quit</span>
-  </button>
+    <!-- QUIT BUTTON -->
+    <button class="button-10" role="button" onclick="quit()">
+      <span id="quitOutput" class="text">Quit</span>
+    </button>
+  </section>
 
-  
+
   <!-- CHECKBOX -->
-   <br><br>
+  <br><br>
   <input type="checkbox" id="autoMode" onchange="toggleAutoMode()">Auto Mode
 
-  
+
 
   <!-- TELEMETRY -->
-  <h3>--Arduino Telemetry------</h3>
-  <textarea id="distanceBox" rows="6" cols="40" readonly></textarea>
-  <!-- <input type="text" id="distanceBox" readonly /> -->
+  <section id="telemetry">
+    <h3>--Arduino Telemetry------</h3>
+    <textarea id="distanceBox" rows="6" cols="40" readonly></textarea>
+    <!-- <input type="text" id="distanceBox" readonly /> -->
+  </section>
 
 
   <!-- SCRIPT -->
@@ -91,7 +99,7 @@
     function connect() {
       let ip = document.getElementById("ipAddress").value;
       let port = document.getElementById("arduinoPort").value;
-      
+
       document.getElementById("connectButton").innerText = "Connecting...";
       fetch(`${BASE_URL}/connect?ip=${ip}&port=${port}`)
         .then((r) => r.json())
@@ -214,7 +222,7 @@
 
     function toggleAutoMode() {
       let isOn = document.getElementById("autoMode").checked;
-      if (isOn){
+      if (isOn) {
         fetch(`${BASE_URL}/auto_on`);
       } else {
         fetch(`${BASE_URL}/auto_off`);
@@ -249,8 +257,9 @@
           box.scrollTop = box.scrollHeight;  //auto-scroll
           // document.getElementById("distanceBox").value = data.distance;
         })
-        .catch(() => {});
+        .catch(() => { });
     }, 300);
   </script>
 </body>
+
 </html>
