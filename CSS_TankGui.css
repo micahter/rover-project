@@ -1,5 +1,5 @@
 body {
-  font-family: Arial;
+  font-family: Verdana;
   padding: 10px;
   max-width: 1100px;
   min-width: 720px;
@@ -63,10 +63,10 @@ img#footage-placeholder {
 
 
 /*lines up control keys and distance sensor*/
-.inline-block-child {
+/* .inline-block-child {
   display: inline-block;
   padding-inline: 50px;
-}
+} */
 
 /* 3D button */
 
@@ -133,22 +133,73 @@ button.button-10:active::before {
 }
 
 section#quit-and-stop {
-  display: block;
-  clear: both;
-  float: left;
-  width: 50%;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  
 }
 
-section#telemetry {
-  display: block;
-  position: absolute;
-  top: 60%;
-  right: 25%;
+section#Distance_chart {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  
+  margin-top: 20px;
 }
 
-section#controls {
-  display: block;
-  float: left;
-}
+
 
 /* End of 3D Button */
+
+/* Bar */
+.barsRow {
+  display: flex;
+  flex-direction: row;
+  gap: 20px; /* space between bars */
+  justify-content: center; /* centers them horizontally */
+  align-items: flex-end; /* aligns bottoms perfectly */
+}
+
+/* Shared vertical bar container */
+.barContainer {
+  position: relative;
+  width: 25px;
+  height: 300px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+/* Shared bar fill */
+.barFill {
+  width: 100%;
+  height: 0%;
+  background: green;
+  transition: height 0.2s linear, background 0.2s linear;
+}
+
+/* Shared safe marker */
+.safeMarker {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: red;
+}
+.barWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.distanceLabel {
+  margin-top: 8px;
+  font-weight: bold;
+  text-align: center;
+}
+
+
+
+/* END */

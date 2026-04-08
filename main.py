@@ -51,9 +51,11 @@ def listen_to_pi():
                 line, buffer = buffer.split(b"\n", 1)
                 decoded = line.decode("utf-8", errors="ignore").strip()
 
-                if decoded.startswith("Distance:"):
+                # Accept new two-sensor format
+                if decoded.startswith("D1:"):
                     latest_distance = decoded
-                    print(f"[Distance] {decoded}")  # print to console for live monitoring
+                    print(f"[Distance] {decoded}")
+                    # print to console for live monitoring
         except Exception as e:
             time.sleep(0.1)
 
@@ -81,12 +83,26 @@ def connect(ip: str, port: int):
         return {"message": f"Failed to connect: {e}"}
 
 
+
+
 @app.get("/distance")
 def get_distance():
-    """Gets the latest distance reading."""
-    return {"distance": latest_distance}
+    try:
+        parts = latest_distance.split()
+
+        d1 = float(parts[0].split(":")[1].replace("cm", "").strip())
+        d2 = float(parts[1].split(":")[1].replace("cm", "").strip())
+
+        return {"d1": d1, "d2": d2}
+
+    except Exception as e:
+        print("Parsing error:", e)
+        return {"d1": 0.0, "d2": 0.0}
 
 
+
+
+ 
 @app.get("/velocity")
 def velocity(v: float):
     """Sets forward/back speed scaling."""
@@ -94,13 +110,6 @@ def velocity(v: float):
     current_velocity = v
     return {"message": f"Velocity set to {current_velocity:.2f}"}
 
-
-@app.get("/turn")
-def turn(w: float):
-    """Sets turning rate scaling."""
-    global current_turn
-    current_turn = w
-    return {"message": f"Turn strength set to {current_turn:.2f}"}
 
 
 @app.get("/stop")
@@ -153,64 +162,6 @@ def auto_off():
     return {"message": "Auto mode OFF"}
 
 
-@app.get("/forward")
-def forward():
-    """Moves forward."""
-    global tcp_socket, current_velocity
-    if not tcp_socket:
-        return {"message": "Robot not connected"}
-    try:
-        cmd = f"V {current_velocity:.2f} {current_velocity:.2f}\n"
-        tcp_socket.sendall(cmd.encode())
-        return {"message": f"Moving forward with velocity {current_velocity:.2f}"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@app.get("/backward")
-def backward():
-    """Moves backward."""
-    global tcp_socket, current_velocity
-    if not tcp_socket:
-        return {"message": "Robot not connected"}
-    try:
-        cmd = f"V -{current_velocity:.2f} -{current_velocity:.2f}\n"
-        tcp_socket.sendall(cmd.encode())
-        return {"message": f"Moving backward with velocity {current_velocity:.2f}"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@app.get("/left")
-def left():
-    """Turns left."""
-    global tcp_socket, current_velocity, current_turn
-    
-    try:
-        left_speed = current_velocity - current_turn
-        right_speed = current_velocity + current_turn
-        cmd = f"V {left_speed:.2f} {right_speed:.2f}\n"
-        tcp_socket.sendall(cmd.encode())
-        return {"message": f"Turning left at velocity {current_velocity:.2f}, turn {current_turn:.2f}"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@app.get("/right")
-def right():
-    """Turns right."""
-    global tcp_socket, current_velocity, current_turn
-    if not tcp_socket:
-        return {"message": "Robot not connected"}
-    try:
-        left_speed = current_velocity + current_turn
-        right_speed = current_velocity - current_turn
-        cmd = f"V {left_speed:.2f} {right_speed:.2f}\n"
-        tcp_socket.sendall(cmd.encode())
-        return {"message": f"Turning right at velocity {current_velocity:.2f}, turn {current_turn:.2f}"}
-    except Exception as e:
-        return {"error": str(e)}
-
 
 @app.get("/velocity_drive")
 def velocity_drive(l: float, r: float):
@@ -224,3 +175,4 @@ def velocity_drive(l: float, r: float):
         return {"message": cmd.strip()}
     except Exception as e:
         return {"error": str(e)}
+

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,7 +8,6 @@
 </head>
 
 <!-- BODY -->
-
 <body>
   <!-- CONNECTION -->
   <h3>--Connection---</h3>
@@ -19,68 +17,77 @@
   <p><span id="connectButton">No Connection</span></p>
   <!-- END OF CONNECTION -->
 
-  <img id="footage-placeholder" src="camera-placeholder.png" alt="Placeholder for live footage">
-
 
   <!-- SPEED SLIDERS -->
   <h3>--Speed-----------</h3>
   <label>Max V (m/s):</label>
-  <input type="range" min="0" max="3" step="0.1" value="1" id="velocitySlider" oninput="updateVelocity()" />
+  <input type="range" min="0" max="3" step="0.1" value="1"
+         id="velocitySlider" oninput="updateVelocity()" />
   <p>Velocity: <span id="velocityValuetext">1</span></p>
 
   <label>Max W (rad/s):</label>
-  <input type="range" min="0" max="3" step="0.1" value="1" id="turnSlider" oninput="updateTurn()" />
+  <input type="range" min="0" max="3" step="0.1" value="1"
+         id="turnSlider" oninput="updateTurn()" />
   <p>Turn Strength: <span id="turnValuetext">1</span></p>
   <!-- END -->
 
   <!-- CONTROL KEYS -->
-  <section id="controls">
-    <h3>--Control Keys--</h3>
-    <div class="controls">
-      <div class="column">
-        <button class="button1" id="btnW" onclick="forward()">W</button>
-      </div>
-      <div class="row">
-        <button class="button1" id="btnA" onclick="left()">A</button>
-        <button class="button1" id="btnS" onclick="backward()">S</button>
-        <button class="button1" id="btnD" onclick="right()">D</button>
-      </div>
+  <h3>--Control Keys--</h3>
+  <div class="controls">
+    <div class="column">
+      <button class="button1" id="btnW" onclick="forward()">W</button>
     </div>
+    <div class="row">
+      <button class="button1" id="btnA" onclick="left()">A</button>
+      <button class="button1" id="btnS" onclick="backward()">S</button>
+      <button class="button1" id="btnD" onclick="right()">D</button>
+    </div>
+  </div>
 
-    <p>
-      <span id="wOutput" style="margin-right:50px;"></span>
-      <span id="sOutput" style="margin-right:50px;"></span>
-      <span id="aOutput" style="margin-right:50px;"></span>
-      <span id="dOutput" style="margin-right:50px;"></span>
-    </p>
-    <!-- END OF CONTROL KEYS -->
-  </section>
+  <p>
+    <span id="wOutput" style="margin-right:50px;"></span>
+    <span id="sOutput" style="margin-right:50px;"></span>
+    <span id="aOutput" style="margin-right:50px;"></span>
+    <span id="dOutput" style="margin-right:50px;"></span>
+  </p>
+  <!-- END OF CONTROL KEYS -->
 
-  <section id="quit-and-stop">
-    <!-- STOP BUTTON -->
-    <button class="button-10" role="button" id="stopButton" onclick="stop()">
-      <span id="stopOutput" class="text">Stop</span>
-    </button>
+  <!-- STOP BUTTON -->
+  <button class="button-10" role="button" id="stopButton" onclick="stop()">
+    <span id="stopOutput" class="text">Stop</span>
+  </button>
 
-    <!-- QUIT BUTTON -->
-    <button class="button-10" role="button" onclick="quit()">
-      <span id="quitOutput" class="text">Quit</span>
-    </button>
-  </section>
+  <!-- QUIT BUTTON -->
+  <button class="button-10" role="button" onclick="quit()">
+    <span id="quitOutput" class="text">Quit</span>
+  </button>
 
-
+  
   <!-- CHECKBOX -->
-  <br><br>
+   <br><br>
   <input type="checkbox" id="autoMode" onchange="toggleAutoMode()">Auto Mode
 
+  <div class="barsRow">
 
+    <!-- Sensor 1 -->
+    <div class="barWrapper">
+      <div class="barContainer">
+        <div id="distanceBar1" class="barFill"></div>
+        <div id="safeMarker1" class="safeMarker"></div>
+      </div>
+      <div id="distanceLabel1" class="distanceLabel">0 cm</div>
+    </div>
 
-  <!-- TELEMETRY -->
-  <section id="telemetry">
-    <h3>--Arduino Telemetry------</h3>
-    <textarea id="distanceBox" rows="6" cols="40" readonly></textarea>
-    <!-- <input type="text" id="distanceBox" readonly /> -->
-  </section>
+    <!-- Sensor 2 -->
+    <div class="barWrapper">
+      <div class="barContainer">
+        <div id="distanceBar2" class="barFill"></div>
+        <div id="safeMarker2" class="safeMarker"></div>
+      </div>
+      <div id="distanceLabel2" class="distanceLabel">0 cm</div>
+    </div>
+
+  </div>
 
 
   <!-- SCRIPT -->
@@ -99,7 +106,7 @@
     function connect() {
       let ip = document.getElementById("ipAddress").value;
       let port = document.getElementById("arduinoPort").value;
-
+      
       document.getElementById("connectButton").innerText = "Connecting...";
       fetch(`${BASE_URL}/connect?ip=${ip}&port=${port}`)
         .then((r) => r.json())
@@ -150,7 +157,7 @@
       handleUI(key);
 
       if (!intervalId) {
-        intervalId = setInterval(sendContinuousCommand, UPDATE_MS); //runs 20 times per second (UPDATE_HZ=20)
+        intervalId = setInterval(sendContinuousCommand, UPDATE_MS); //runs 20 times per second(UPDATE_HZ=20)
       }
     });
 
@@ -222,7 +229,7 @@
 
     function toggleAutoMode() {
       let isOn = document.getElementById("autoMode").checked;
-      if (isOn) {
+      if (isOn){
         fetch(`${BASE_URL}/auto_on`);
       } else {
         fetch(`${BASE_URL}/auto_off`);
@@ -244,22 +251,73 @@
         .catch((err) => console.log(err));
     }
 
-    // -------------------------------
-    // DISTANCE SENSOR POLLING
-    // -------------------------------
+    // let is used to create a variable- a box in memory where
+    // you store a value that can change
+    let count1 = 0, total1 = 0;
+    let count2 = 0, total2 = 0;
+
     setInterval(() => {
       if (!connected) return;
+
       fetch(`${BASE_URL}/distance`)
-        .then((r) => r.json())
-        .then((data) => {
-          const box = document.getElementById("distanceBox");
-          box.value += `Distance: ${data.distance}\n`; //or ''
-          box.scrollTop = box.scrollHeight;  //auto-scroll
-          // document.getElementById("distanceBox").value = data.distance;
+        .then(r => r.json())
+        .then(data => {
+
+          const d1 = data.d1;   //"cons" means this variable cannot be reassigned
+          const d2 = data.d2;
+          total1 += d1;
+          total2 += d2;
+          count1++;
+          count2++;
+
+          //Every time we get a distance reading, add it to the total 
+          //When we have 4 readings, compute the average
+
+          if (count1 === 4 && count2 === 4) {
+
+            const avg1 = total1 / 4.0;
+            const avg2 = total2 / 4.0;
+
+            // Update bars 
+            updateVerticalBar(avg1, "distanceBar1", "safeMarker1", "distanceLabel1");
+            updateVerticalBar(avg2, "distanceBar2", "safeMarker2", "distanceLabel2");
+
+            
+            count1 = 0;
+            total1 = 0;
+
+            count2 = 0;
+            total2 = 0;
+          }
         })
-        .catch(() => { });
+        .catch(err => console.log("Fetch error:", err));
     }, 300);
+
+
+    // Helper to update bar height + color + label
+    function updateVerticalBar(distance, barId, markerId, labelId) {
+      const maxRange = 100; // max cm for full bar
+
+      // Convert distance to percentage height
+      let percent = Math.min(100, (distance / maxRange) * 100);
+
+      const bar = document.getElementById(barId);
+      bar.style.height = percent + "%";
+
+      // Color logic
+      if (distance < 30) bar.style.background = "red";
+      else if (distance < 60) bar.style.background = "yellow";
+      else bar.style.background = "green";
+
+      // Safe marker at 20 cm
+      const safe = document.getElementById(markerId);
+      safe.style.bottom = (20 / maxRange) * 100 + "%";
+
+      // Update label with ONLY the average
+      document.getElementById(labelId).innerText = `${distance.toFixed(2)} cm`;
+    }
+
+
   </script>
 </body>
-
 </html>
