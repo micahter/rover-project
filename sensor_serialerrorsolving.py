@@ -1,43 +1,62 @@
 #!/usr/bin/env python3
-
+# This was modified on 3/7/2026
 import socket, threading, sys, time
 import serial
 import RPi.GPIO as GPIO #controlling GPIo pins
+from collections import deque  
 
-# ---- Ajusta estos valores si es necesario ----
-SERIAL_PORT = '/dev/ttyACM0'   # o /dev/ttyUSB0
+
+# ---- Adjust these values if necessary. ----
+SERIAL_PORT = '/dev/ttyACM0'   # o /dev/ttyUSB0   or /dev/ttyACM0
 SERIAL_BAUD = 115200
-TCP_HOST    = '172.20.10.4'
+TCP_HOST    = '0.0.0.0' #174.234.241.63
 TCP_PORT    = 8765
+
 # ---------------------------------------------
 
-
-
-TRIG = 23
-ECHO = 24
+#Front Sensor
+TRIG1 = 21
+ECHO1 = 16
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(TRIG, GPIO.OUT)
-GPIO.setup(ECHO, GPIO.IN)
+GPIO.setup(TRIG1, GPIO.OUT)
+GPIO.setup(ECHO1, GPIO.IN)
 
-def get_distance():
-    GPIO.output(TRIG, False) #ensure TRIG is low
-    time.sleep(0.05)
+#Side Sensor
+TRIG2 = 20
+ECHO2 = 12
 
+GPIO.setup(TRIG2, GPIO.OUT)
+GPIO.setup(ECHO2, GPIO.IN)
+
+def get_distance(TRIG, ECHO):
+    GPIO.output(TRIG, False)
+    time.sleep(0.002)
+
+    # 10 microsecond pulse
     GPIO.output(TRIG, True)
-    time.sleep(0.01)
+    time.sleep(0.00001)
     GPIO.output(TRIG, False)
 
-    start = time.time() #record start time
-    while GPIO.input(ECHO) == 0: #wait for the acho to start
-        start = time.time()
-    timeout = time.time() + 1  #timeout after 1 second
-    while GPIO.input(ECHO) == 1 and time.time() < timeout: #wait for ECHO to end
-        end = time.time()
+    start = time.time()
+    timeout = start + 0.04  # 40ms max wait
 
-    duration = end - start
-    distance = duration * 17150 #convert to cm
+    # Wait for echo HIGH
+    while GPIO.input(ECHO) == 0:
+        start = time.time()
+        if start > timeout:
+            return 999  # no echo
+
+    # Wait for echo LOW
+    end = time.time()
+    while GPIO.input(ECHO) == 1:
+        end = time.time()
+        if end > timeout:
+            return 999  # stuck high
+
+    distance = (end - start) * 17150
     return round(distance, 2)
+
 
 # Variables globales
 safe_distance = 20
@@ -45,9 +64,12 @@ safe_distance = 20
 #change the number for distance
 auto_mode_button = False  # "False" It will be controlled for GUI
 current_conn = None       #storesactive TCP connection
-conn_Lock = threading.Lock()
+conn_lock = threading.Lock()
 #to make sure only one thread at a time touches current_conn
 running = True
+
+cmd_history= deque(maxlen=100)  #automatically removes the oldest entry when full
+file_lock = threading.Lock()  #Lock to prevent FastApi and the TCP from writing/reading at the same time
 
 
 def auto_mode(ser):
@@ -60,10 +82,10 @@ def auto_mode(ser):
     while running: #while auto_mode is "On"
         try:
             if auto_mode_button:
-                dist = get_distance() #calling the get distance function
-                print(f"[Auto Mode] Distance: {dist} cm")
+                d1 = get_distance(TRIG1, ECHO1) #calling the get distance function
+                print(f"[Auto Mode] Distance1: {d1} cm")
 
-                if dist < safe_distance: #obstacle detected
+                if d1 < safe_distance: #obstacle detected
                     if last_action != "right": # Gui is sending the "back" from "controls"
                         #print("Obstacle detected! Distance below safe_distance")
                         #print("[AUTO MODE] Sending -> stop")
@@ -76,7 +98,6 @@ def auto_mode(ser):
                         #print("[AUTO MODE] Sending -> s (back)")
                         cmd= "V -1.00 -1.00"
                         ser.write((cmd + "\n").encode("utf-8")) #sending "back"
-                        ser.write((cmd + "\n").encode("utf-8"))
                         time.sleep(2) #wait for 2 seconds to let the robot move backward
 
                         if not auto_mode_button:
@@ -84,10 +105,9 @@ def auto_mode(ser):
 
 
                         #print("[AUTO MODE] sending -> turn (after back and stop)")
-                        cmd= "V 2.50 -2.50"
+                        cmd= "V 1.00 -1.00"
                         ser.write((cmd + "\n").encode("utf-8")) #to turn right
-                        ser.write((cmd + "\n").encode("utf-8"))
-                        time.sleep(3)
+                        time.sleep(2)
 
 
 
@@ -115,6 +135,16 @@ def auto_mode(ser):
         except Exception as e:
             print("Error in auto_mode:", e)
             time.sleep(1)
+            
+def save_history():
+    """ Writes the last 100 commands to data.bin in a safe, atomic way,
+        using a lock so only one thread writes at a time.
+    """ 
+    file_path = "data_bin"
+    with file_lock:
+        with open (file_path,"wb") as f:
+            for c in cmd_history:
+                f.write((c + "\n").encode("utf-8"))
 
 def serial_reader(ser, conn):
     """Read data from Arduino and resent to the TCP client."""
@@ -131,6 +161,8 @@ def serial_reader(ser, conn):
                 pass
     except Exception as e:
         print("Serial reader stopped:", e)
+        
+
 
 def tcp_client_thread(conn, addr, ser):
     """Handles TCP client communication"""
@@ -138,7 +170,7 @@ def tcp_client_thread(conn, addr, ser):
 
     print(f"Client connected: {addr}")
 
-    with conn_Lock: #lock access to current_conn, make the change, then unlock it
+    with conn_lock: #lock access to current_conn, make the change, then unlock it
         current_conn = conn  #Store active connection
 
     pump = threading.Thread(target=serial_reader, args=(ser, conn), daemon=True)
@@ -146,7 +178,7 @@ def tcp_client_thread(conn, addr, ser):
 
     try:
         buf = b''
-        while True:
+        while running:
             data = conn.recv(4096) #Receive data from client
             if not data:
                 break
@@ -169,13 +201,30 @@ def tcp_client_thread(conn, addr, ser):
 
                     print("Function stop 3")
                 elif cmd.lower() == "quit":
+                    #global running
                     auto_mode_button = False
-                    print("Quit received")
-                    break
+                    #running = False
+                    print("Quit received - shutting down.")
+                    try:
+                        ser.write(b"Quit\n") #Tell Arduino to Stop
+                    except:
+                        pass
+
+                    try:
+                        conn.close() #Close TCP connection
+                    except:
+                        pass
+                    with conn_lock:
+                        current_conn = None
+                    return
+                    #break
 
                 else:
                     print(f"[TCP->SERIAL] Forwarding to Arduino: '{cmd}'")
                     ser.write((cmd + "\n").encode("utf-8"))
+                    cmd_history.append(cmd)   # Stores the command in the history
+                    save_history() 
+
     except Exception as e:
         print("Client error:", e)
     finally:
@@ -183,10 +232,11 @@ def tcp_client_thread(conn, addr, ser):
             conn.close()
         except:
             pass
-        with conn_Lock:
+        with conn_lock:
             current_conn = None
         print("Client disconnected")
 def main():
+
 
     # Serial Connection with Arduino
     try:
@@ -200,19 +250,30 @@ def main():
         global current_conn
         while running:
             try:
-                dist = get_distance()  #calling the function
-                msg = f"Distance:{dist}cm\n"
+                # Read sensor 1
+                d1 = get_distance(TRIG1, ECHO1) # d1 is always read first for auto_mode
+
+                # Prevent interference
+                time.sleep(0.03) #30ms 
+
+                # Read sensor 2
+                d2 = get_distance(TRIG2, ECHO2)
+
+                msg = f"D1:{d1}cm D2:{d2}cm\n"
 
                 try:
-                    with conn_Lock: # in a loop , it ensures the sensor thread doesn't try to send data
+                    with conn_lock:
                         if current_conn:
                             current_conn.sendall(msg.encode("utf-8"))
                 except Exception:
                     pass
+
                 time.sleep(0.5)
+
             except Exception as e:
                 print("Error in sensor_loop:", e)
                 time.sleep(1)
+
 
     threading.Thread(target=sensor_loop, args=(ser,), daemon=True).start() #sensor loop
     threading.Thread(target=auto_mode, args=(ser,), daemon=True).start()   #auto_mode
@@ -223,21 +284,32 @@ def main():
     s.bind((TCP_HOST, TCP_PORT))
     s.listen(1)     #makes a socket ready for accepting connections
 
+    s.settimeout(1.0) #timeout for accepting connections, allows to check "running" periodically
+
+
     print(f"Bridge listening on {TCP_HOST}:{TCP_PORT}, forwarding -> {SERIAL_PORT}@{SERIAL_BAUD}")
 
     try:
-        while True:
-            conn, addr = s.accept()
-            threading.Thread(target=tcp_client_thread, args=(conn, addr, ser), daemon=True).start()
-            #daemon runs and exits when the main program ends
-    finally:
         global running
-        running = False  # Tell threads to stop
+        while running:
+
+            try:
+                conn, addr = s.accept()
+                threading.Thread(target=tcp_client_thread, args=(conn, addr, ser), daemon=True).start()
+                #daemon runs and exits when the main program ends
+            except socket.timeout: #for periodically checking the "running" variable
+                continue
+
+    #global running
+    finally:
+        #global running
+
+        running = False  #Tell threads to stop
 
     try:
-        ser.write(b"Quit\n")  # Let Arduino know we're shutting down
+        ser.write(b"Quit\n")  #Let Arduino know we're shutting down
     except:
-        pass  # we're quitting 
+        pass
 
     s.close()
     ser.close()
