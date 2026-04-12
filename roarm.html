@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="CSS_TankGui.css" />
+    <title>Ro Arm</title>
+</head>
+
+<body>
+    <nav id="bar">
+        <a href="main.html">MAIN</a>
+    </nav>
+    <button class="cleaners-btn" onclick="runArm('testcon.json')">TESTER</button>
+    <p>This option is to make sure our arm is connected</p>
+    <button class="cleaners-btn" onclick="runArm('motion1.py')">Clean 1</button>
+    <button class="cleaners-btn" onclick="runArm('motion2.py')">Clean 2</button>
+    
+    <div id="status">Waiting commands...</div>
+    <script>
+        async function runArm(fileName) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.color = "orange";
+            statusDiv.innerText = `Executing, WAIT: ${fileName}...`;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/arm/execute/${fileName}`);
+                const data = await response.json();
+                if (data.status == "Success"){
+                    statusDiv.style.color = "green";
+                    statusDiv.innerText = `Successful ${fileName} working. \nOutput: ${data.output}`;
+                } else{
+                    statusDiv.style.color = "red";
+                    statusDiv.innerText = `Error: ${data.details}`;
+                }
+            } catch (error){
+                statusDiv.style.color = "red";
+                statusDiv.innerText = `Connection Error, Try Again`;
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+
+</html>

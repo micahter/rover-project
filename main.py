@@ -1,10 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import socket
 import threading
 import time
+#import paramiko        #for arm connection through raspberry pi
+import serial          #for connection through USB[use COM##]
 
 app = FastAPI()
+
+# -------------------------------------------------------
+#  FILES ALLOWED 
+# -------------------------------------------------------
+ALLOWED_FILES = ["testcon.json", "motion1.py", "motion2.py", "drag_teach.json"]     #This files will be changed in the future
 
 # -------------------------------------------------------
 #  CORS CONFIGURATION
@@ -27,6 +34,58 @@ current_velocity = 1.0
 current_turn = 1.0
 latest_distance = "No data"
 
+# Arm Info
+ARM_IP = "192.168.4.1"       # CHECK IP ADDRESS OF ARM || RASPBERRY PI IP
+ARM_USER = "pi"
+ARM_PASS = "pi"
+
+
+# -------------------------------------------------------
+#  ARM CONNECTION // The one commented needs to be tested 
+# -------------------------------------------------------
+#def run_arm_logic(filename: str):
+#    try: 
+#        client = paramiko.SSHClient()
+#        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#        client.connect(ARM_IP, port="COM14", username=ARM_USER, password=ARM_PASS)
+#        if filename.endswith(".py"):
+#            command = f"python3 {filename}"
+#        elif filename.endswith(".json"):
+#            """CHECK IF THE main.py EXISTS IN THE PI TO PROCESS THE JSON"""
+#            command = f"python3 main.py {filename}"
+#        else:
+#            return {"error": "Unsupported file format"}
+#        
+#        stdin, stdout, stderr = client.exec_command(command)
+#        output = stdout.read().decode('utf-8')
+#        error = stderr.read().decode('utf-8')
+
+#        client.close()
+#        return {"output": output, "error": error}
+#    except Exception as e:
+#        return {"error": str(e)}
+
+
+def run_arm_logic(filename: str):
+    SERIAL_PORT = "COM14"  
+    BAUD_RATE = 115200      
+    
+    try:
+        with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2) as ser:
+            if filename.endswith(".json"):
+                with open(f"./armcontroller/waveshare_roarm_sdk-main/waveshare_roarm_sdk-main/demo/{filename}", "r") as f:
+                    command = f.read()
+                
+                ser.write(command.encode('utf-8'))
+                
+                response = ser.readline().decode('utf-8')
+                return {"output": response, "error": ""}
+            
+            else:
+                return {"error": "For now we only allow documents .json through USB"}
+                
+    except Exception as e:
+        return {"error": f"Serial connection Error: {str(e)}"}
 
 # -------------------------------------------------------
 #  BACKGROUND LISTENER (Distance updates)
@@ -60,6 +119,24 @@ def listen_to_pi():
             time.sleep(0.1)
 
 
+
+
+# -------------------------------------------------------
+#  ARM ENDPOINT
+# -------------------------------------------------------
+
+@app.get("/arm/execute/{name}")
+async def execute_arm_command(name: str):
+    if name not in ALLOWED_FILES:
+        raise HTTPException(status_code=400, detail="UNAUTHORIZE FILE")
+    
+    result = run_arm_logic(name)
+
+    if "error" in result and result["error"]:
+        return {"status": "error", "details": result["error"]}
+    
+    return {"status": "Success", "file": name, "output": result["output"]}
+
 # -------------------------------------------------------
 #  ENDPOINTS
 # -------------------------------------------------------
@@ -83,8 +160,6 @@ def connect(ip: str, port: int):
         return {"message": f"Failed to connect: {e}"}
 
 
-
-
 @app.get("/distance")
 def get_distance():
     try:
@@ -100,9 +175,6 @@ def get_distance():
         return {"d1": 0.0, "d2": 0.0}
 
 
-
-
- 
 @app.get("/velocity")
 def velocity(v: float):
     """Sets forward/back speed scaling."""
@@ -175,4 +247,3 @@ def velocity_drive(l: float, r: float):
         return {"message": cmd.strip()}
     except Exception as e:
         return {"error": str(e)}
-
