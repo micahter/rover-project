@@ -12,6 +12,7 @@
   <header class="top-bar">
     <nav class="top-nav">
       <a href="roarm.html" class="nave-link">ARM</a>
+      <a href="imageClassifier.html" class="nave-link">Image Classifier</a>
     </nav>
   </header>
 
@@ -329,8 +330,11 @@
 
     // let is used to create a variable- a box in memory where
     // you store a value that can change
-    let count1 = 0, total1 = 0;
-    let count2 = 0, total2 = 0;
+    let count1=[]
+    let count2=[]
+
+    //let count1 = 0, total1 = 0;
+    //let count2 = 0, total2 = 0;
 
     setInterval(() => {
       if (!connected) return;
@@ -339,32 +343,33 @@
         .then(r => r.json())
         .then(data => {
 
-          const d1 = data.d1;   //"cons" means this variable cannot be reassigned
-          const d2 = data.d2;
-          total1 += d1;
-          total2 += d2;
-          count1++;
-          count2++;
-
+          const d1 = Number(data.d1);   //"cons" means this variable cannot be reassigned
+          const d2 = Number(data.d2);
+          if(count1.length<10){
+            count1.push(d1)
+            count2.push(d2)
+          }
+          else{
+            count1.shift()
+            count1.push(d1)
+            count2.shift()
+            count2.push(d2)
+          }
+          const total1=count1.reduce(
+            (accumulator,currentValue)=>accumulator+ currentValue,0);
+          const total2=count2.reduce(
+            (accumulator,currentValue)=>accumulator+ currentValue,0);
+          const avg1=total1/count1.length;
+          const avg2=total2/count2.length; 
           //Every time we get a distance reading, add it to the total 
           //When we have 4 readings, compute the average
 
-          if (count1 === 4 && count2 === 4) {
+         
+          // Update bars 
+          updateVerticalBar(avg1, "distanceBar1", "safeMarker1", "distanceLabel1");
+          updateVerticalBar(avg2, "distanceBar2", "safeMarker2", "distanceLabel2");
 
-            const avg1 = total1 / 4.0;
-            const avg2 = total2 / 4.0;
-
-            // Update bars 
-            updateVerticalBar(avg1, "distanceBar1", "safeMarker1", "distanceLabel1");
-            updateVerticalBar(avg2, "distanceBar2", "safeMarker2", "distanceLabel2");
-
-            
-            count1 = 0;
-            total1 = 0;
-
-            count2 = 0;
-            total2 = 0;
-          }
+          
         })
         .catch(err => console.log("Fetch error:", err));
     }, 300);
