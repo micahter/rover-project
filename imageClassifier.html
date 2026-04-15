@@ -13,15 +13,95 @@
         <a href="main.html">MAIN</a>
     </nav>
 
-    <div id="video_Drop">
-        <h2>Drop video here</h2>
+    <div id="image and video upload" class ="largeContainer">
+
+        <div id="image_drop" class="container">
+            <h2 class ="first">Insert Image</h2>
+
+            <label for="img">Select image:</label>
+            <input type="file" id="img" name="file" accept="image/*" onchange="loadFile(event)">
+
+            <button id="uploadButton" class="cleaners-btn" type="button" onclick="upload()">Upload</button>
+
+            <img class= "second" id="output" width="200"/>
+
+            <h3>Result:</h3>
+            <h3 id="outputText"></h3>
+        </div>
+
+
+
+        <div id="video_Drop" class="container">
+            <h2>Drop video here</h2>
+            <input type="file" name="file" id="video-input" accept="video/*" onchange="loadVid(event)">
+            <button id="uploadButton" class="cleaners-btn" type="button" onclick="uploadVid()">Upload</button>
+            <video id="videoOutput" width="400" controls></video>
+
+        </div>
     </div>
 
-    <div id="image_drop">
-        <h2>Insert Image</h2>
-        <label for="img">Select image:</label>
-        <input type="file" id="img" name="img" accept="image/*">
-        <input type="submit">
-    </div>
+
+
+    <script>
+        // preview image
+        function loadFile(event) {
+            const image = document.getElementById('output');
+            image.src = URL.createObjectURL(event.target.files[0]);
+        }
+        function loadVid(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const video = document.getElementById('videoOutput');
+                video.src = URL.createObjectURL(file);
+                video.load();
+                video.play();
+            }
+        }
+        // upload + get result
+        async function upload() {
+            const fileInput = document.getElementById("img");
+
+            if (!fileInput.files.length) {
+                alert("Please select a file first");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const response = await fetch("http://127.0.0.1:8000/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            document.getElementById("outputText").innerText = data.result;
+        }
+        function uploadVid() {
+            const input = document.getElementById('video-input');
+            if (input.files.length === 0) {
+                alert("Please select a video first.");
+                return;
+            }
+
+            const file = input.files[0];
+            console.log("Uploading:", file.name);
+
+            // Example: send to server with fetch
+            const formData = new FormData();
+            formData.append("video", file);
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.text())
+            .then(data => console.log(data))
+            .catch(err => console.error(err));
+        }
+
+        
+    </script>
 </body>
 </html>
