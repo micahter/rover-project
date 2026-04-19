@@ -56,15 +56,15 @@
             const image = document.getElementById('output');
             image.src = URL.createObjectURL(event.target.files[0]);
         }
-        function loadVid(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const video = document.getElementById('videoOutput');
-                video.src = URL.createObjectURL(file);
-                video.load();
-                video.play();
-            }
-        }
+        // function loadVid(event) {
+        //     const file = event.target.files[0];
+        //     if (file) {
+        //         const video = document.getElementById('videoOutput');
+        //         video.src = URL.createObjectURL(file);
+        //         video.load();
+        //         video.play();
+        //     }
+        // }
         // upload + get result
         async function upload() {
             const fileInput = document.getElementById("img");
@@ -86,28 +86,59 @@
 
             document.getElementById("outputText").innerText = data.result;
         }
-        function uploadVid() {
+
+
+        async function uploadVid() {
             const input = document.getElementById('video-input');
-            if (input.files.length === 0) {
-                alert("Please select a video first.");
-                return;
-            }
 
-            const file = input.files[0];
-            console.log("Uploading:", file.name);
+            const formData2 = new FormData();
+            formData2.append("file", input.files[0]);
 
-            // Example: send to server with fetch
-            const formData = new FormData();
-            formData.append("video", file);
-
-            fetch("/upload", {
+            const res = await fetch("http://127.0.0.1:8000/uploadVid", {
                 method: "POST",
-                body: formData
-            })
-            .then(res => res.text())
-            .then(data => console.log(data))
-            .catch(err => console.error(err));
+                body: formData2
+            });
+
+            const data = await res.json();
+
+            startStream(data.filename);
         }
+        
+        function startStream(filename) {
+            const socket = new WebSocket(`ws://127.0.0.1:8000/ws/video/${filename}`);
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if(data.error){
+                    console.error(data.error);
+                    return;
+                }
+
+        // Convert hex → image
+            const bytes = new Uint8Array(
+                data.image.match(/.{1,2}/g).map(b => parseInt(b, 16))
+            );
+
+            const blob = new Blob([bytes], { type: "image/jpeg" });
+            const url = URL.createObjectURL(blob);
+
+            document.getElementById("videoOutput").src = url;
+            if(data.label=="clean"){
+                document.getElementById("videoImageContainer").style.borderColor = "green";
+            }else if(data.label=="dirty"){
+                document.getElementById("videoImageContainer").style.borderColor = "red";
+
+            }else{
+                document.getElementById("videoImageContainer").style.borderColor = "gray";
+
+            }
+            document.getElementById("videoResult").innerText=
+            `Frame ${data.frame}: ${data.label} (${data.confidence}%)`;
+            // console.log(
+            //     `Frame ${data.frame}: ${data.label} (${data.confidence}%)`
+            // );
+    };
+}
 
         
     </script>

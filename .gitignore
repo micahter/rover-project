@@ -1,1 +1,9 @@
 .venv
+/uploads
+/videoImages
+/videoUploads
+*.jpg
+*.jpeg
+*.png
+*.ckpt
+epoch=45-val_loss=0.20.ckpt

@@ -657,13 +657,19 @@ input[type="range"]::-moz-range-thumb {
 .largeContainer{
   display: flex;
 }
-.largeContainer div{
+.largeContainer > div{
   flex: 1;
   margin-top: 200px;
 }
 
+#videoImageContainer {
+  border-width: 5px; /* 90px is huge, maybe try 10px first! */
+  border-style: solid;
+  border-color: gray; /* Default color before the JS kicks in */
+  display: inline-block; /* Ensures the container wraps the image tightly */
+}
 
-.container {
+.Container {
   display: flex;
   flex-direction: column;
   gap: 30px;
