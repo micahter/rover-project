@@ -9,36 +9,44 @@
 
 
 <body>
-    <nav id="bar">
-        <a href="main.html">MAIN</a>
-    </nav>
+    <header class="top-bar">
+        <nav class="top-nav">
+            <h4>LANDBOT</h4>
+            <h4><a href="main.html" class="nave-link">MAIN</a></h4>
+            <h4><a href="roarm.html" class="nave-link">ARM</a></h4>
+            <h4><a href="imageClassifier.html" class="nave-link">Image Classifier</a></h4>
+        </nav>
+    </header>
 
-    <div id="image and video upload" class ="largeContainer">
+    <main class="layout3">
+        <section class="cardI" id="card-image">
+            <div id="image_drop" class="container">
+                <div class="cardI-label">Image</div>
+                <h2 class ="first">Insert Image</h2>
 
-        <div id="image_drop" class="container">
-            <h2 class ="first">Insert Image</h2>
+                <label for="img">Select image:</label>
+                <input type="file" id="img" name="file" accept="image/*" onchange="loadFile(event)">
 
-            <label for="img">Select image:</label>
-            <input type="file" id="img" name="file" accept="image/*" onchange="loadFile(event)">
+                <button id="uploadButton" class="cleaners-btn" type="button" onclick="upload()">Upload</button>
 
-            <button id="uploadButton" class="cleaners-btn" type="button" onclick="upload()">Upload</button>
+                <img class= "second" id="output" width="200"/>
 
-            <img class= "second" id="output" width="200"/>
+                <h3>Result:</h3>
+                <h3 id="outputText"></h3>
+            </div>
 
-            <h3>Result:</h3>
-            <h3 id="outputText"></h3>
-        </div>
+        </section>
 
-
-
-        <div id="video_Drop" class="container">
-            <h2>Drop video here</h2>
-            <input type="file" name="file" id="video-input" accept="video/*" onchange="loadVid(event)">
-            <button id="uploadButton" class="cleaners-btn" type="button" onclick="uploadVid()">Upload</button>
-            <video id="videoOutput" width="400" controls></video>
-
-        </div>
-    </div>
+        <section class="cardI" id="card-video">
+            <div id="video_Drop" class="container">
+                <div class="cardI-label">Video</div>
+                <h2>Drop video here</h2>
+                <input type="file" name="file" id="video-input" accept="video/*" onchange="loadVid(event)">
+                <button id="uploadButton" class="cleaners-btn" type="button" onclick="uploadVid()">Upload</button>
+                <video id="videoOutput" width="375" controls></video>
+            </div>
+        </section>
+    </main>
 
 
 

@@ -8,13 +8,42 @@
 </head>
 
 <body>
-    <nav id="bar">
-        <a href="main.html">MAIN</a>
-    </nav>
+    <header class="top-bar">
+        <nav class="top-nav">
+            <h4>LANDBOT</h4>
+            <h4><a href="main.html" class="nave-link">MAIN</a></h4>
+            <h4><a href="roarm.html" class="nave-link">ARM</a></h4>
+            <h4><a href="imageClassifier.html" class="nave-link">Image Classifier</a></h4>
+        </nav>
+    </header>
+    <!-- Left Side-->
+    <main class="layout2">
+        <section class="cardA" id="card-righ                                                                                                                                       ttools">
+            <div class="cardA-label">Cleaner Tool 1</div>
+            <button class="cleaners-btn" onclick="runArm('clean.json')">Clean</button>
+            <button class="cleaners-btn" onclick="runArm('grabto.json')">Grab Tool</button>
+            <button class="cleaners-btn" onclick="runArm('switch.json')">Switch Tool</button>
+            <button class="cleaners-btn" onclick="runArm('dropto.json')">Drop Tool</button>
+            <div id="status">Waiting commands...</div>
+        </section>
+
+        <!-- RIGHT SIDE-->
+        <!-- Change the files!!! -->
+        
+        <section class="cardA" id="card-lefttools">
+            <div class="cardA-label">Cleaner Tool 2</div>
+            <button class="cleaners-btn" onclick="runArm('clean.json')">Clean</button>
+            <button class="cleaners-btn" onclick="runArm('grabto2.json')">Grab Tool</button>
+            <button class="cleaners-btn" onclick="runArm('switchto2.json')">Switch Tool</button>
+            <button class="cleaners-btn" onclick="runArm('dropto2.json')">Drop Tool</button>
+            <div id="status">Waiting commands...</div>
+        </section>
+
+    </main>
+  
+    
     <button class="cleaners-btn" onclick="runArm('testcon.json')">TESTER</button>
     <p>This option is to make sure our arm is connected</p>
-    <button class="cleaners-btn" onclick="runArm('motion1.py')">Clean 1</button>
-    <button class="cleaners-btn" onclick="runArm('motion2.py')">Clean 2</button>
     
     <div id="status">Waiting commands...</div>
     <script>
