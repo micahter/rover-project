@@ -167,12 +167,13 @@ def get_distance():
 
         d1 = float(parts[0].split(":")[1].replace("cm", "").strip())
         d2 = float(parts[1].split(":")[1].replace("cm", "").strip())
+        d3 = float(parts[2].split(":")[1].replace("cm", "").strip())
 
-        return {"d1": d1, "d2": d2}
+        return {"d1": d1, "d2": d2, "d3": d3}
 
     except Exception as e:
         print("Parsing error:", e)
-        return {"d1": 0.0, "d2": 0.0}
+        return {"d1": 0.0, "d2": 0.0, "d3": 0.0}
 
 
 @app.get("/velocity")

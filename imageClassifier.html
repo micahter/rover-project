@@ -43,12 +43,30 @@
                 <h2>Drop video here</h2>
                 <input type="file" name="file" id="video-input" accept="video/*" onchange="loadVid(event)">
                 <button id="uploadButton" class="cleaners-btn" type="button" onclick="uploadVid()">Upload</button>
-                <video id="videoOutput" width="375" controls></video>
+
+                <div id="videoImageContainer" style="margin-top: 10px; padding: 5px; border: 5px solid gray;">
+                    <img id="videoOutput" width="375" height="400"/>
+                </div>
+        
+                <h3 id="videoResult">Waiting for stream...</h3>
             </div>
         </section>
     </main>
 
-
+<!-- <section class="cardI" id="card-video">
+    <div id="video_Drop" class="container">
+        <div class="cardI-label">Video</div>
+        <h2>Drop video here</h2>
+        <input type="file" name="file" id="video-input" accept="video/*">
+        <button id="uploadButtonVid" class="cleaners-btn" type="button" onclick="uploadVid()">Upload</button>
+        
+        <div id="videoImageContainer" style="margin-top: 10px; padding: 5px; border: 5px solid gray;">
+            <img id="videoOutput" width="375" />
+        </div>
+        
+        <h3 id="videoResult">Waiting for stream...</h3>
+    </div>
+</section> -->
 
     <script>
         // preview image

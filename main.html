@@ -104,6 +104,15 @@
               </div>
               <div id="distanceLabel2" class="distanceLabel">0 cm</div>
             </div>
+
+            <div class="barWrapper">
+              <div class="barContainer">
+                <div id="distanceBar3" class="barFill"></div>
+                <div id="safeMarker3" class="safeMarker"></div>
+              </div>
+              <div id="distanceLabel3" class="distanceLabel">0 cm</div>
+            </div>
+
           </div> 
         </div> 
       </section>
@@ -332,8 +341,9 @@
 
     // let is used to create a variable- a box in memory where
     // you store a value that can change
-    let count1=[]
-    let count2=[]
+    let count1 = []
+    let count2 = []
+    let count3 = []
 
     //let count1 = 0, total1 = 0;
     //let count2 = 0, total2 = 0;
@@ -347,22 +357,29 @@
 
           const d1 = Number(data.d1);   //"cons" means this variable cannot be reassigned
           const d2 = Number(data.d2);
+          const d3 = Number(data.d3)
           if(count1.length<10){
             count1.push(d1)
             count2.push(d2)
+            count3.push(d3)
           }
           else{
             count1.shift()
             count1.push(d1)
             count2.shift()
             count2.push(d2)
+            count3.shift()
+            cont3.push(d3)
           }
           const total1=count1.reduce(
             (accumulator,currentValue)=>accumulator+ currentValue,0);
           const total2=count2.reduce(
             (accumulator,currentValue)=>accumulator+ currentValue,0);
+          const total3=count3.reduce(
+            (accumulator,currentValue)=>accumulator+ currentValue,0);
           const avg1=total1/count1.length;
           const avg2=total2/count2.length; 
+          const avg3=total3/count3.length;
           //Every time we get a distance reading, add it to the total 
           //When we have 4 readings, compute the average
 
@@ -370,6 +387,7 @@
           // Update bars 
           updateVerticalBar(avg1, "distanceBar1", "safeMarker1", "distanceLabel1");
           updateVerticalBar(avg2, "distanceBar2", "safeMarker2", "distanceLabel2");
+          updateVerticalBar(avg3, "distanceBar3", "safeMarker3", "distanceLabel3");
 
           
         })
