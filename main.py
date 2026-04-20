@@ -1,10 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
 import socket
 import threading
 import time
 #import paramiko        #for arm connection through raspberry pi
 import serial          #for connection through USB[use COM##]
+
+import math
 
 app = FastAPI()
 
@@ -27,17 +30,22 @@ app.add_middleware(
 # -------------------------------------------------------
 #  GLOBAL VARIABLES
 # -------------------------------------------------------
-tcp_socket = None
+sensor_socket = None
+command_socket = None
+
 current_ip = None
-current_port = None
+current_port = None  # command port from UI
+
 current_velocity = 1.0
 current_turn = 1.0
-latest_distance = "No data"
+latest_distance = "D1:999cm"
+
 
 # Arm Info
 ARM_IP = "192.168.4.1"       # CHECK IP ADDRESS OF ARM || RASPBERRY PI IP
 ARM_USER = "pi"
 ARM_PASS = "pi"
+
 
 
 # -------------------------------------------------------
@@ -90,17 +98,16 @@ def run_arm_logic(filename: str):
 # -------------------------------------------------------
 #  BACKGROUND LISTENER (Distance updates)
 # -------------------------------------------------------
-def listen_to_pi():
-    global tcp_socket, latest_distance
-    buffer = b""
-
+def listen_to_sensors():
+    global sensor_socket, latest_distance
+    buffer = b""   
     while True:
         try:
-            if tcp_socket is None:
+            if sensor_socket is None:
                 time.sleep(0.1)
                 continue
 
-            data = tcp_socket.recv(1024)
+            data = sensor_socket.recv(1024)
             if not data:
                 time.sleep(0.1)
                 continue
@@ -109,13 +116,10 @@ def listen_to_pi():
             while b"\n" in buffer:
                 line, buffer = buffer.split(b"\n", 1)
                 decoded = line.decode("utf-8", errors="ignore").strip()
-
-                # Accept new two-sensor format
                 if decoded.startswith("D1:"):
                     latest_distance = decoded
                     print(f"[Distance] {decoded}")
-                    # print to console for live monitoring
-        except Exception as e:
+        except Exception:
             time.sleep(0.1)
 
 
@@ -143,108 +147,206 @@ async def execute_arm_command(name: str):
 
 @app.get("/connect")
 def connect(ip: str, port: int):
-    """Connects to Raspberry Pi TCP server."""
-    global tcp_socket, current_ip, current_port
+    """Connects to Raspberry Pi TCP servers (command + sensor)."""
+    global sensor_socket, command_socket, current_ip, current_port
+
     current_ip = ip
     current_port = port
+
+    # Close old sockets if any
     try:
-        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_socket.connect((ip, port))
+        if command_socket:
+            command_socket.close()
+    except:
+        pass
+    try:
+        if sensor_socket:
+            sensor_socket.close()
+    except:
+        pass
 
-        # Start background listener
-        threading.Thread(target=listen_to_pi, daemon=True).start()
+    try:
+        # Command socket (UI port, e.g. 8765)
+        cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cmd_sock.connect((ip, port))
 
-        return {"message": f"Connected to {ip}:{port}"}
+        # Sensor socket (port + 1, e.g. 8766)
+        sens_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sens_sock.connect((ip, port + 1))
+
+        command_socket = cmd_sock
+        sensor_socket = sens_sock
+
+        threading.Thread(target=listen_to_sensors, daemon=True).start()
+
+        return {"message": f"Connected to {ip}:{port} (cmd) and {ip}:{port+1} (sensor)"}
     except Exception as e:
-        tcp_socket = None
+        command_socket = None
+        sensor_socket = None
         return {"message": f"Failed to connect: {e}"}
 
 
 @app.get("/distance")
 def get_distance():
     try:
+        # Expected format: "D1:10cm D2:15cm D3:20cm"
+        # If your sensor only sends D1, we provide defaults for the others.
         parts = latest_distance.split()
+        
+        d1 = 0.0
+        d2 = 0.0
+        d3 = 0.0
 
-        d1 = float(parts[0].split(":")[1].replace("cm", "").strip())
-        d2 = float(parts[1].split(":")[1].replace("cm", "").strip())
-        d3 = float(parts[2].split(":")[1].replace("cm", "").strip())
+        for p in parts:
+            if "D1:" in p:
+                d1 = float(p.split(":")[1].replace("cm", "").strip())
+            elif "D2:" in p:
+                d2 = float(p.split(":")[1].replace("cm", "").strip())
+            elif "D3:" in p:
+                d3 = float(p.split(":")[1].replace("cm", "").strip())
 
         return {"d1": d1, "d2": d2, "d3": d3}
-
     except Exception as e:
-        print("Parsing error:", e)
+        print(f"Parsing error: {e}")
         return {"d1": 0.0, "d2": 0.0, "d3": 0.0}
-
+    
 
 @app.get("/velocity")
 def velocity(v: float):
-    """Sets forward/back speed scaling."""
     global current_velocity
     current_velocity = v
     return {"message": f"Velocity set to {current_velocity:.2f}"}
 
-
-
 @app.get("/stop")
 def stop():
-    """Stops the robot."""
-    global tcp_socket
-    if not tcp_socket:
+    global command_socket
+    if not command_socket:
         return {"message": "Robot not connected"}
     try:
-        tcp_socket.sendall(b"stop_button\n")
+        command_socket.sendall(b"stop_button\n")
         return {"message": "Robot Stopped"}
     except Exception as e:
         return {"message": f"Failed to stop: {e}"}
 
-
 @app.get("/quit")
 def quit():
-    """Quits and closes the socket."""
-    global tcp_socket
+    global command_socket, sensor_socket
     try:
-        if tcp_socket:
-            tcp_socket.sendall(b"quit\n")
-            tcp_socket.close()
-            tcp_socket = None
-            return {"message": "Connection closed and quit command sent"}
-        return {"message": "No active connection to close"}
+        if command_socket:
+            command_socket.sendall(b"quit\n")
+            command_socket.close()
+            command_socket = None
+        if sensor_socket:
+            sensor_socket.close()
+            sensor_socket = None
+        return {"message": "Connection closed and quit command sent"}
     except Exception as e:
         return {"message": f"Failed to close connection: {e}"}
 
+@app.get("/parallel_button")
+def parallel():
+    global command_socket
+    if not command_socket:
+        return {"message": "Parallel Parking Error"}
+    try:
+        command_socket.sendall(b"parallel_button\n") # This sends the string to the Pi
+        return {"message": "Starting autonomous parking"}
+    except Exception as e:
+        return {"message": f"Failed to start parallel: {e}"}
 
 @app.get("/auto_on")
 def auto_on():
-    """Turns auto mode on."""
-    global tcp_socket
-    if not tcp_socket:
+    global command_socket
+    if not command_socket:
         return {"message": "Robot not connected"}
-    
-    tcp_socket.sendall(b"auto on\n")
-    return {"message": "Auto mode ON"}
-
+    try:
+        command_socket.sendall(b"auto on\n")
+        return {"message": "Auto mode ON"}
+    except Exception as e:
+        return {"message": f"Failed to enable auto: {e}"}
 
 @app.get("/auto_off")
 def auto_off():
-    """Turns auto mode off."""
-    global tcp_socket
-    if not tcp_socket:
+    global command_socket
+    if not command_socket:
         return {"message": "Robot not connected"}
-    
-    tcp_socket.sendall(b"auto off\n")
-    return {"message": "Auto mode OFF"}
-
-
+    try:
+        command_socket.sendall(b"auto off\n")
+        return {"message": "Auto mode OFF"}
+    except Exception as e:
+        return {"message": f"Failed to disable auto: {e}"}
 
 @app.get("/velocity_drive")
 def velocity_drive(l: float, r: float):
-    """Direct velocity control: used for 20 Hz continuous driving."""
-    global tcp_socket
-    if not tcp_socket:
+    global command_socket
+    if not command_socket:
         return {"message": "Robot not connected"}
     try:
         cmd = f"V {l:.3f} {r:.3f}\n"
-        tcp_socket.sendall(cmd.encode())
+        command_socket.sendall(cmd.encode())
         return {"message": cmd.strip()}
     except Exception as e:
         return {"error": str(e)}
+    
+
+
+# Initialize turtle but don't start the loop yet
+def init_turtle():
+    try:
+        t = turtle.Turtle()
+        t.speed(0)
+        t.hideturtle() # Faster drawing
+        return t
+    except:
+        return None
+
+t = None # Global turtle instance
+
+def translate_command(cmd: str, turtle_instance):
+    if not turtle_instance: return
+    parts = cmd.strip().split()
+    if len(parts) != 3 or parts[0] != "V":
+        return
+
+    try:
+        left = float(parts[1])
+        right = float(parts[2])
+
+        # Differential drive math
+        forward = (left + right) / 2
+        # Calculate rotation: if right > left, turn left (positive angle)
+        turn = (right - left) * 45  # Adjusted sensitivity
+
+        turtle_instance.forward(forward * 20) # Scaling for visibility
+        turtle_instance.left(turn) 
+    except ValueError:
+        pass
+
+
+
+@app.get("/history")
+def get_history():
+    global command_socket
+    if not command_socket:
+        return {"error": "Robot not connected"}
+
+    try:
+        command_socket.sendall(b"get_history\n")
+        
+        buffer = b""
+        # Set a small timeout so we don't hang if END_OF_HISTORY is missed
+        command_socket.settimeout(2.0) 
+        while b"END_OF_HISTORY" not in buffer:
+            chunk = command_socket.recv(4096)
+            if not chunk: break
+            buffer += chunk
+        
+        data = buffer.replace(b"END_OF_HISTORY", b"").strip()
+        text = data.decode("utf-8").replace("\r", "")
+        commands = [c for c in text.split("\n") if c.strip()] # Filter empty lines
+        
+        return {"commands": commands}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        command_socket.settimeout(None)

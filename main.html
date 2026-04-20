@@ -37,6 +37,9 @@
       </section>
       <!-- END OF CONNECTION -->
 
+      <!-- Parallel_button -->
+       <button class="btn-primary" onclick="parallel_button()">Parallel Parking</button>
+
 
       <!-- SPEED STARTS-->
        <section class="card" id="card-speed">
@@ -339,6 +342,21 @@
         .catch((err) => console.log(err));
     }
 
+    function parallel_button() {
+    if (!connected) return;
+
+    fetch(`${BASE_URL}/parallel_button`)
+        .then((r) => r.json())
+        .then((data) => {
+            // Display the message (e.g., "Starting autonomous parking")
+            document.getElementById("stopOutput").innerText = data.message;
+            
+            // REMOVED: connected = false; 
+            // Keep it true so you can still hit "STOP" if something goes wrong!
+        })
+        .catch((err) => console.log("Parallel Parking Error:", err));
+  }
+
     // let is used to create a variable- a box in memory where
     // you store a value that can change
     let count1 = []
@@ -369,7 +387,7 @@
             count2.shift()
             count2.push(d2)
             count3.shift()
-            cont3.push(d3)
+            count3.push(d3)
           }
           const total1=count1.reduce(
             (accumulator,currentValue)=>accumulator+ currentValue,0);
@@ -417,6 +435,61 @@
       // Update label with ONLY the average
       document.getElementById(labelId).innerText = `${distance.toFixed(2)} cm`;
     }
+
+
+    // --- PATH TRACKER LOGIC ---
+    const canvas = document.getElementById('turtleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Initial robot state
+    let robotPos = { x: canvas.width / 2, y: canvas.height / 2, angle: -Math.PI / 2 }; 
+
+    function drawPath(commands) {
+        // Clear canvas and reset start position
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.strokeStyle = "#ae0849"; // Match your pink theme
+        ctx.lineWidth = 2;
+        
+        // Start drawing from center
+        let x = canvas.width / 2;
+        let y = canvas.height / 2;
+        let angle = -Math.PI / 2; // Facing "up"
+        
+        ctx.moveTo(x, y);
+
+        commands.forEach(cmd => {
+            const parts = cmd.split(' ');
+            if (parts[0] === 'V' && parts.length === 3) {
+                const left = parseFloat(parts[1]);
+                const right = parseFloat(parts[2]);
+
+                // Differential Drive Math
+                const speed = (left + right) / 2;
+                const turn = (right - left); 
+
+                // Update angle and position
+                // Adjust 0.1 and 5 to scale the drawing to fit your canvas
+                angle += turn * 0.1; 
+                x += Math.cos(angle) * speed * 5;
+                y += Math.sin(angle) * speed * 5;
+
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+    }
+
+    // Function to refresh history every second
+    setInterval(() => {
+        if (!connected) return;
+        fetch(`${BASE_URL}/history`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.commands) drawPath(data.commands);
+            })
+            .catch(err => console.error("Path tracker error:", err));
+    }, 1000);
 
 
   </script>
