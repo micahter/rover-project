@@ -243,16 +243,31 @@ def quit():
     except Exception as e:
         return {"message": f"Failed to close connection: {e}"}
 
-@app.get("/parallel_button")
-def parallel():
+# @app.get("/parallel_button")
+# def parallel():
+#     global command_socket
+#     if not command_socket:
+#         return {"message": "Parallel Parking Error"}
+#     try:
+#         command_socket.sendall(b"parallel_button\n") # This sends the string to the Pi
+#         return {"message": "Starting autonomous parking"}
+#     except Exception as e:
+#         return {"message": f"Failed to start parallel: {e}"}
+
+
+@app.get("/parallel_on")
+def parallel_on():
     global command_socket
-    if not command_socket:
-        return {"message": "Parallel Parking Error"}
-    try:
-        command_socket.sendall(b"parallel_button\n") # This sends the string to the Pi
-        return {"message": "Starting autonomous parking"}
-    except Exception as e:
-        return {"message": f"Failed to start parallel: {e}"}
+    if command_socket:
+        command_socket.sendall(b"parallel on\n")
+    return {"message": "Parallel parking ON"}
+
+@app.get("/parallel_off")
+def parallel_off():
+    global command_socket
+    if command_socket:
+        command_socket.sendall(b"parallel off\n")
+    return {"message": "Parallel parking OFF"}
 
 @app.get("/auto_on")
 def auto_on():
@@ -290,37 +305,6 @@ def velocity_drive(l: float, r: float):
     
 
 
-# # Initialize turtle but don't start the loop yet
-# def init_turtle():
-#     try:
-#         t = turtle.Turtle()
-#         t.speed(0)
-#         t.hideturtle() # Faster drawing
-#         return t
-#     except:
-#         return None
-
-# t = None # Global turtle instance
-
-# def translate_command(cmd: str, turtle_instance):
-#     if not turtle_instance: return
-#     parts = cmd.strip().split()
-#     if len(parts) != 3 or parts[0] != "V":
-#         return
-
-#     try:
-#         left = float(parts[1])
-#         right = float(parts[2])
-
-#         # Differential drive math
-#         forward = (left + right) / 2
-#         # Calculate rotation: if right > left, turn left (positive angle)
-#         turn = (right - left) * 45  # Adjusted sensitivity
-
-#         turtle_instance.forward(forward * 20) # Scaling for visibility
-#         turtle_instance.left(turn) 
-#     except ValueError:
-#         pass
 
 
 

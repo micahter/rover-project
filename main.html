@@ -38,7 +38,7 @@
       <!-- END OF CONNECTION -->
 
       <!-- Parallel_button -->
-       <button class="btn-primary" onclick="parallel_button()">Parallel Parking</button>
+       <!-- <button class="btn-primary" onclick="parallel_button()">Parallel Parking</button> -->
 
 
       <!-- SPEED STARTS-->
@@ -77,6 +77,11 @@
           <span class="switch-state" id="autoModeLabel">OFF</span>
         </label>
        </section>
+
+       <!-- Parallel_button -->
+       <input type="checkbox" onchange="parallel_button(this.checked)"> Parallel Parking 
+
+
     </aside>
     <!-- LEFT SIDE ENDS-->
 
@@ -342,20 +347,7 @@
         .catch((err) => console.log(err));
     }
 
-    function parallel_button() {
-    if (!connected) return;
-
-    fetch(`${BASE_URL}/parallel_button`)
-        .then((r) => r.json())
-        .then((data) => {
-            // Display the message (e.g., "Starting autonomous parking")
-            document.getElementById("stopOutput").innerText = data.message;
-            
-            // REMOVED: connected = false; 
-            // Keep it true so you can still hit "STOP" if something goes wrong!
-        })
-        .catch((err) => console.log("Parallel Parking Error:", err));
-  }
+    
 
     // let is used to create a variable- a box in memory where
     // you store a value that can change
@@ -503,6 +495,14 @@
             })
             .catch(err => console.error("Path tracker error:", err));
     }, 1000);
+
+    function parallel_button(isChecked) {
+      if (isChecked) {
+          fetch(`${BASE_URL}/parallel_on`);
+      } else {
+          fetch(`${BASE_URL}/parallel_off`);
+      }
+  }
 
 
   </script>
