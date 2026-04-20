@@ -6,7 +6,7 @@ import threading
 import time
 #import paramiko        #for arm connection through raspberry pi
 import serial          #for connection through USB[use COM##]
-
+import turtle
 import math
 
 app = FastAPI()
@@ -290,40 +290,41 @@ def velocity_drive(l: float, r: float):
     
 
 
-# Initialize turtle but don't start the loop yet
-def init_turtle():
-    try:
-        t = turtle.Turtle()
-        t.speed(0)
-        t.hideturtle() # Faster drawing
-        return t
-    except:
-        return None
+# # Initialize turtle but don't start the loop yet
+# def init_turtle():
+#     try:
+#         t = turtle.Turtle()
+#         t.speed(0)
+#         t.hideturtle() # Faster drawing
+#         return t
+#     except:
+#         return None
 
-t = None # Global turtle instance
+# t = None # Global turtle instance
 
-def translate_command(cmd: str, turtle_instance):
-    if not turtle_instance: return
-    parts = cmd.strip().split()
-    if len(parts) != 3 or parts[0] != "V":
-        return
+# def translate_command(cmd: str, turtle_instance):
+#     if not turtle_instance: return
+#     parts = cmd.strip().split()
+#     if len(parts) != 3 or parts[0] != "V":
+#         return
 
-    try:
-        left = float(parts[1])
-        right = float(parts[2])
+#     try:
+#         left = float(parts[1])
+#         right = float(parts[2])
 
-        # Differential drive math
-        forward = (left + right) / 2
-        # Calculate rotation: if right > left, turn left (positive angle)
-        turn = (right - left) * 45  # Adjusted sensitivity
+#         # Differential drive math
+#         forward = (left + right) / 2
+#         # Calculate rotation: if right > left, turn left (positive angle)
+#         turn = (right - left) * 45  # Adjusted sensitivity
 
-        turtle_instance.forward(forward * 20) # Scaling for visibility
-        turtle_instance.left(turn) 
-    except ValueError:
-        pass
+#         turtle_instance.forward(forward * 20) # Scaling for visibility
+#         turtle_instance.left(turn) 
+#     except ValueError:
+#         pass
 
 
 
+# In main.py - Clean up the history parsing
 @app.get("/history")
 def get_history():
     global command_socket
@@ -334,16 +335,15 @@ def get_history():
         command_socket.sendall(b"get_history\n")
         
         buffer = b""
-        # Set a small timeout so we don't hang if END_OF_HISTORY is missed
-        command_socket.settimeout(2.0) 
+        command_socket.settimeout(1.0) 
         while b"END_OF_HISTORY" not in buffer:
             chunk = command_socket.recv(4096)
             if not chunk: break
             buffer += chunk
         
-        data = buffer.replace(b"END_OF_HISTORY", b"").strip()
-        text = data.decode("utf-8").replace("\r", "")
-        commands = [c for c in text.split("\n") if c.strip()] # Filter empty lines
+        # Decode and split into a clean list of strings like ["V 1.0 1.0", "V 0.5 -0.5"]
+        text = buffer.decode("utf-8").replace("END_OF_HISTORY", "").strip()
+        commands = [c.strip() for c in text.split("\n") if c.strip().startswith("V")]
         
         return {"commands": commands}
     except Exception as e:

@@ -445,40 +445,53 @@
     let robotPos = { x: canvas.width / 2, y: canvas.height / 2, angle: -Math.PI / 2 }; 
 
     function drawPath(commands) {
-        // Clear canvas and reset start position
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.strokeStyle = "#ae0849"; // Match your pink theme
-        ctx.lineWidth = 2;
-        
-        // Start drawing from center
-        let x = canvas.width / 2;
-        let y = canvas.height / 2;
-        let angle = -Math.PI / 2; // Facing "up"
-        
-        ctx.moveTo(x, y);
+      const canvas = document.getElementById('turtleCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      // 1. Clear and setup style
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.strokeStyle = "#ae0849"; 
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
 
-        commands.forEach(cmd => {
-            const parts = cmd.split(' ');
-            if (parts[0] === 'V' && parts.length === 3) {
-                const left = parseFloat(parts[1]);
-                const right = parseFloat(parts[2]);
+      // 2. Start from center
+      let x = canvas.width / 2;
+      let y = canvas.height / 2;
+      let angle = -Math.PI / 2; // Face "up" initially
 
-                // Differential Drive Math
-                const speed = (left + right) / 2;
-                const turn = (right - left); 
+      // 3. Constants for scaling (Adjust these to fit your robot's scale)
+      const trackWidth = 10; // Distance between wheels in "canvas pixels"
+      const stepSize = 0.5;   // How much the robot moves per history entry
 
-                // Update angle and position
-                // Adjust 0.1 and 5 to scale the drawing to fit your canvas
-                angle += turn * 0.1; 
-                x += Math.cos(angle) * speed * 5;
-                y += Math.sin(angle) * speed * 5;
+      ctx.moveTo(x, y);
 
-                ctx.lineTo(x, y);
-            }
-        });
-        ctx.stroke();
-    }
+      commands.forEach(cmd => {
+          const parts = cmd.split(' ');
+          if (parts[0] === 'V' && parts.length === 3) {
+              const left = parseFloat(parts[1]);
+              const right = parseFloat(parts[2]);
+
+              // Differential Kinematics
+              const linearVel = (left + right) / 2;
+              const angularVel = (right - left) / trackWidth;
+
+              // Update pose
+              angle += angularVel; 
+              x += Math.cos(angle) * linearVel * stepSize;
+              y += Math.sin(angle) * linearVel * stepSize;
+
+              ctx.lineTo(x, y);
+        }
+    });
+    ctx.stroke();
+
+    // 4. Draw a small triangle at the current position to represent the robot
+    ctx.fillStyle = "#ff94b2";
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+}
 
     // Function to refresh history every second
     setInterval(() => {
