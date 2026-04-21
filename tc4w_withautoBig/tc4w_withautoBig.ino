@@ -1,21 +1,22 @@
 // PWM pins
-#define ENA 3   // Front Left M2
-#define ENB 5   // Rear Left M4
-#define ENC 4  // Rear Right M3
-#define END 2  // Front Right M1
+#define ENA 3   // Front Left M6
+#define ENB 5   // Rear Left M5
+#define ENC 4  // Rear Right M2
+#define END 2  // Front Right M3
 
 // Direction pins
-#define EN1 23  // Front Left M2 
+#define EN1 23  // Front Left M6 
 
-#define EN3 25   // Rear Left M4
+#define EN3 25   // Rear Left M5
 
-#define EN5 22   // Front Right M1  
+#define EN5 22   // Rear Right M2
 
-#define EN7 24  // Rear Right M3    
+#define EN7 24  // Front Right M3
 
 
 
 bool autoMode = false;   // 
+bool parallel = false;
 
 void setup() {
   Serial.begin(115200);
@@ -52,9 +53,18 @@ void loop() {
       Serial.println("Auto mode: OFF");
       stop();
     }
+    else if (cmd == "parallel on") {
+      parallel = true;
+      Serial.println("Parallel parking: ON");
+    }
+    else if (cmd == "parallel off"){
+      parallel = false;
+      Serial.println("Parallel parking: OFF");
+    }
 
     else if (cmd == "stop_button" ) { 
       autoMode = false;
+      parallel = false;
       Serial.println("sending from Arduino STOP");
       stop();
       //delay(20000);
@@ -86,22 +96,22 @@ void setMotor(String dir, int pwm) {
   analogWrite(ENC, pwm);
   analogWrite(END, pwm);
 
-  if (dir == "w") { // Backwards
+  if (dir == "s") { // Backwards  old "w"
     digitalWrite(EN1, HIGH); 
     digitalWrite(EN3, HIGH); 
     digitalWrite(EN5, HIGH); 
     digitalWrite(EN7, HIGH); 
-  } else if (dir == "s") { // Forwards
+  } else if (dir == "w") { // Forwards  old "s"
     digitalWrite(EN1, LOW); 
     digitalWrite(EN3, LOW); 
     digitalWrite(EN5, LOW); 
     digitalWrite(EN7, LOW); 
-  } else if (dir == "d") { // Turn Right
+  } else if (dir == "d") { // Turn Right  old "a"
     digitalWrite(EN1, LOW); 
     digitalWrite(EN3, LOW); 
     digitalWrite(EN5, HIGH); 
     digitalWrite(EN7, HIGH); 
-  } else if (dir == "a") { // Turn Left
+  } else if (dir == "a") { // Turn Left  old "d"
     digitalWrite(EN1, HIGH); 
     digitalWrite(EN3, HIGH); 
     digitalWrite(EN5, LOW); 
@@ -125,15 +135,15 @@ void setMotorSpeeds(float left, float right) {
   analogWrite(END, pwmR);
 
   // Left motors
-  digitalWrite(EN1, left >= 0 ? HIGH : LOW);
+  digitalWrite(EN1, left >= 0 ? LOW : HIGH);
   
-  digitalWrite(EN3, left >= 0 ? HIGH : LOW);
+  digitalWrite(EN3, left >= 0 ? LOW : HIGH);
   
 
   // Right motors
-  digitalWrite(EN5, right >= 0 ? HIGH : LOW);
+  digitalWrite(EN5, right >= 0 ? LOW : HIGH);
   
-  digitalWrite(EN7, right >= 0 ? HIGH : LOW);
+  digitalWrite(EN7, right >= 0 ? LOW : HIGH);
  
 
   Serial.print("V ");
